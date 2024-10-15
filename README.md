@@ -19,7 +19,7 @@ UVDM is a powerful and easy-to-use tool for downloading and managing videos from
 To install UVDM, simply clone the repository and install the required dependencies:
 
 ```sh
-git clone https://github.com/username/uvdm.git
+git clone https://github.com/Lovsan/uvdm.git
 cd uvdm
 pip install -r requirements.txt
 ```
