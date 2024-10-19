@@ -325,6 +325,19 @@ class DownloadsHistoryTab(QWidget):
         else:
             QMessageBox.warning(self, "File Error", "The video file could not be found.")
 
+    def play_video_grid(self, video_data):
+        """Plays the selected video from the grid."""
+        video_path = video_data.get("path")
+        if video_path and os.path.exists(video_path):
+            # Play the video using the default media player
+            try:
+                os.startfile(video_path)
+            except Exception as e:
+                QMessageBox.critical(self, "Play Error", f"An error occurred while trying to play the video: {str(e)}")
+        else:
+            QMessageBox.warning(self, "File Not Found", "The video file could not be found.")
+
+
     def rename_video(self, item):
         data = item.data(0, Qt.UserRole)
         old_path = data.get('path')
@@ -416,34 +429,85 @@ class DownloadsHistoryTab(QWidget):
             json.dump(self.downloads_data, f, indent=4)
 
     def resizeEvent(self, event):
+        """Handle window resize events to adjust the grid layout and refresh the view."""
         super().resizeEvent(event)
-        self.adjust_grid_columns()
+        try:
+            self.adjust_grid_columns()
+        except Exception as e:
+            logging.error(f"An error occurred in grid view handling: {e}")
+            QMessageBox.critical(self, "Error", "An unexpected error occurred while adjusting the grid view.")
 
     def on_resize(self, event):
         self.adjust_grid_columns()
 
     def adjust_grid_columns(self):
+        """Adjust the number of columns and thumbnail sizes in the grid layout based on the window width."""
         if self.current_view != 'grid':
             return
 
-        thumb_width = 300
-        available_width = self.scroll_area.viewport().width()
-        num_columns = max(1, available_width // (thumb_width + self.grid_layout.horizontalSpacing()))
-        if num_columns <= 0:
-            num_columns = 1
+        # Calculate thumbnail width based on window size, setting a minimum and maximum width
+        min_thumb_width = 150  # Minimum thumbnail width
+        max_thumb_width = 300  # Maximum thumbnail width
+        available_width = self.width()  # Total available width in the current window
+        num_columns = max(1, available_width // (min_thumb_width + self.grid_layout.horizontalSpacing()))
 
-        # Re-arrange the items in the grid layout
-        count = self.grid_layout.count()
+        # Calculate the actual thumbnail width based on the number of columns
+        if num_columns > 0:
+            thumb_width = min(max(min_thumb_width, available_width // num_columns), max_thumb_width)
+        else:
+            thumb_width = min_thumb_width
+
+        # Clear existing layout items
+        for i in reversed(range(self.grid_layout.count())):
+            widget_to_remove = self.grid_layout.itemAt(i).widget()
+            if widget_to_remove is not None:
+                widget_to_remove.setParent(None)
+
+        # Re-add the thumbnails and titles to the grid layout
         row = 0
         col = 0
-        for index in range(0, count, 2):  # Each item is two widgets: thumbnail and title
-            thumbnail_item = self.grid_layout.itemAt(index)
-            title_item = self.grid_layout.itemAt(index + 1)
-            self.grid_layout.addItem(thumbnail_item, row, col)
-            self.grid_layout.addItem(title_item, row + 1, col)
+        for video_data in self.downloads_data:
+            # Skip non-video files
+            if not video_data.get('path', '').lower().endswith(('.mp4', '.avi', '.mkv', '.flv', '.mov')):
+                continue
+
+            # Create a ClickableLabel for the thumbnail
+            thumbnail_label = ClickableLabel()
+            thumbnail_path = video_data.get('thumbnail', '')
+            if os.path.exists(thumbnail_path):
+                pixmap = QPixmap(thumbnail_path)
+                # Scale pixmap to calculated thumbnail width, keeping aspect ratio
+                scaled_pixmap = pixmap.scaled(thumb_width, thumb_width, Qt.KeepAspectRatio)
+                thumbnail_label.setPixmap(scaled_pixmap)
+            else:
+                thumbnail_label.setText("No Thumbnail")
+                thumbnail_label.setFixedWidth(thumb_width)
+                thumbnail_label.setFixedHeight(thumb_width)
+
+            # Store video data in the label
+            thumbnail_label.setProperty('video_data', video_data)
+            thumbnail_label.clicked.connect(self.grid_item_clicked)
+
+            # Create a QLabel for the title
+            title_label = QLabel(video_data.get('title', 'Unknown Title'))
+            title_label.setFixedWidth(thumb_width)
+            title_label.setWordWrap(False)
+            title_label.setAlignment(Qt.AlignCenter)
+            title_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            metrics = title_label.fontMetrics()
+            elided_text = metrics.elidedText(title_label.text(), Qt.ElideRight, thumb_width)
+            title_label.setText(elided_text)
+            title_label.setToolTip(video_data.get('title', 'Unknown Title'))
+
+            # Add the thumbnail and title to the grid layout
+            self.grid_layout.addWidget(thumbnail_label, row, col, alignment=Qt.AlignCenter)
+            self.grid_layout.addWidget(title_label, row + 1, col, alignment=Qt.AlignCenter)
+
             col += 1
             if col >= num_columns:
                 col = 0
                 row += 2
 
+        # Adjust the scroll area and scroll widget size
         self.scroll_widget.adjustSize()
+        self.scroll_area.adjustSize()
