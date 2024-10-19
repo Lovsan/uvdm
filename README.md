@@ -29,7 +29,7 @@ pip install -r requirements.txt
 To start UVDM, run the following command:
 
 ```sh
-python uvdm.py
+python main.py
 ```
 
 Once the application launches, you can use the following features:
