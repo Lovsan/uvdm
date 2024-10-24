@@ -1,4 +1,6 @@
 import os
+import platform
+import subprocess
 import time
 import requests
 import re
@@ -138,10 +140,23 @@ class YTDLPTab(QWidget):
 
     def play_video(self):
         if self.downloaded_video_path and os.path.exists(self.downloaded_video_path):
-            os.startfile(self.downloaded_video_path)
+            system = platform.system().lower()
+
+            try:
+                if system == "windows":
+                    os.startfile(self.downloaded_video_path)
+                elif system == "darwin":  # macOS
+                    subprocess.call(["open", self.downloaded_video_path])
+                elif system == "linux":
+                    subprocess.call(["xdg-open", self.downloaded_video_path])
+                else:
+                    QMessageBox.warning(self, "Unsupported OS",
+                                        "Video playback is not supported on this operating system.")
+            except Exception as e:
+                QMessageBox.warning(self, "Playback Error",
+                                    f"An error occurred while trying to play the video: {str(e)}")
         else:
             QMessageBox.warning(self, "File Error", "The video file could not be found.")
-
     def upload_video(self):
         upload_site = self.settings_tab.get_upload_site()
         if not upload_site:
