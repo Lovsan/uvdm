@@ -15,6 +15,9 @@ from app.batch_downloader import BatchDownloader
 from app.about_tab import AboutTab
 from app.clipboard_monitor import ClipboardMonitor
 from app.themes import themes
+from app.my_playlists_tab import MyPlaylistsTab
+#from app.my_playlists import PlaylistManager
+
 
 class YTDLPApp(QMainWindow):
     def __init__(self):
@@ -32,12 +35,14 @@ class YTDLPApp(QMainWindow):
         self.uploads_tab = self.download_manager.uploads_tab  # Uploads tab
         self.batch_downloader_tab = BatchDownloader(self.settings_tab)  # Batch Downloader tab
         self.editor_tab = EditorTab()  # Editor tab
+        self.playlists_tab = MyPlaylistsTab() #  My Playlists tab
 
         # Add the tabs to the main window
         self.tabs.addTab(self.download_manager, "Downloads")
         self.tabs.addTab(self.batch_downloader_tab, "Batch Downloader")
         self.tabs.addTab(self.history_tab, "Download History")
         self.tabs.addTab(self.download_later_tab, "Download Later")
+        self.tabs.addTab(self.playlists_tab, "My Playlists")
         self.tabs.addTab(self.uploads_tab, "Uploads")
         self.tabs.addTab(self.settings_tab, "Settings")
         self.tabs.addTab(self.logs_tab, "Logs")
