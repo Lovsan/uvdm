@@ -5,6 +5,7 @@ import re
 import json
 import logging
 import traceback
+from datetime import datetime
 from PyQt5.QtCore import QObject, pyqtSignal
 import yt_dlp
 from app.logger import YTDLPLogger
@@ -133,9 +134,9 @@ class DownloadWorker(QObject):
                     "url": info.get("webpage_url", ""),
                     "duration": info.get("duration", 0),
                     "thumbnail": "",
-                    "source_site": self.extract_source_site(info.get("webpage_url", ""))
+                    "source_site": self.extract_source_site(info.get("webpage_url", "")),
+                    "download_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
-
                 # Download thumbnail if the option is enabled in settings
                 if self.settings_tab.download_thumbnails_checkbox.isChecked():
                     thumbnail_url = info.get("thumbnail", "")
