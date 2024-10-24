@@ -1,41 +1,97 @@
 import json
 import os
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QComboBox, QPushButton, QMessageBox, QLineEdit, QHBoxLayout, QCheckBox
-from app.themes import themes  # Ensure you have a themes.py file as shown below
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QTabWidget, QLabel, QComboBox, QPushButton, QMessageBox,
+    QLineEdit, QHBoxLayout, QCheckBox, QFormLayout, QSlider, QFileDialog, QGroupBox
+)
 from PyQt5.QtCore import Qt
 
 class SettingsTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.layout = QVBoxLayout()
+
+        # Main layout for the settings page
+        main_layout = QVBoxLayout()
+
+        # Create a QTabWidget to hold the different sections
+        self.tabs = QTabWidget()
+        self.main_settings_tab = QWidget()
+        self.styles_tab = QWidget()
+        self.upload_settings_tab = QWidget()
+        self.download_settings_tab = QWidget()
+        self.proxy_settings_tab = QWidget()
+
+        # Add tabs to the QTabWidget
+        self.tabs.addTab(self.main_settings_tab, "Main Settings")
+        self.tabs.addTab(self.styles_tab, "Styles")
+        self.tabs.addTab(self.upload_settings_tab, "Upload Settings")
+        self.tabs.addTab(self.download_settings_tab, "Download Settings")
+        self.tabs.addTab(self.proxy_settings_tab, "Proxy Settings")
+
+        # Populate each tab with settings
+        self.setup_main_settings()
+        self.setup_styles_settings()
+        self.setup_upload_settings()
+        self.setup_download_settings()
+        self.setup_proxy_settings()
+
+        # Add the tabs to the main layout
+        main_layout.addWidget(self.tabs)
+        self.setLayout(main_layout)
+
+    def setup_main_settings(self):
+        layout = QVBoxLayout()
+
+        self.api_key_input = QLineEdit()
+        self.api_key_input.setPlaceholderText("Enter your API key")
+        layout.addWidget(QLabel("API Key:"))
+        layout.addWidget(self.api_key_input)
 
         self.default_view_label = QLabel("Default History View:")
         self.default_view_combo = QComboBox()
         self.default_view_combo.addItems(["List View", "Grid View"])
+        layout.addWidget(self.default_view_label)
+        layout.addWidget(self.default_view_combo)
 
-        self.quality_label = QLabel("Select Quality:")
-        self.quality_combo = QComboBox()
-        self.quality_combo.addItems(["Best", "High", "Medium", "Low"])
+        self.main_settings_tab.setLayout(layout)
 
-        self.format_label = QLabel("Select Format:")
-        self.format_combo = QComboBox()
-        self.format_combo.addItems(["MP4", "MP3", "AVI"])
+    def setup_styles_settings(self):
+        layout = QFormLayout()
 
-        self.theme_label = QLabel("Select Theme:")
+        # List available themes
         self.theme_combo = QComboBox()
-        self.theme_combo.addItems(list(themes.keys()))
+        theme_folder = os.path.join(os.getcwd(), 'themes')
+        if os.path.exists(theme_folder):
+            themes = [f.replace('.py', '') for f in os.listdir(theme_folder) if f.endswith('.py')]
+            self.theme_combo.addItems(themes)
+        layout.addRow(QLabel("Select Theme:"), self.theme_combo)
 
-        # Label for download playlist toggle
-        self.playlist_checkbox = QCheckBox("Download Playlists (True/False)")
-        self.playlist_checkbox.setChecked(True)  # Default to True
-        self.playlist_checkbox.stateChanged.connect(self.update_playlist_state)
+        # Option to edit the selected theme
+        edit_theme_button = QPushButton("Edit Theme")
+        edit_theme_button.clicked.connect(self.edit_theme)
+        layout.addRow(edit_theme_button)
 
-        # Label for download thumbnails toggle
-        self.download_thumbnails_checkbox = QCheckBox("Download Thumbnails (True/False)")
-        self.download_thumbnails_checkbox.setChecked(True)  # Default to True
-        self.download_thumbnails_checkbox.stateChanged.connect(self.update_thumbnails_state)
+        # Open the app in full screen mode or 1024x768, 1280x720, 1920x1080
+        self.fullscreen_checkbox = QCheckBox("Open in Full Screen Mode")
+        self.fullscreen_checkbox.setChecked(True)
+        layout.addRow(self.fullscreen_checkbox)
 
-        self.upload_settings_label = QLabel("Upload Settings:")
+        self.resolution_combo = QComboBox()
+        self.resolution_combo.addItems(["1024x768", "1280x720", "1920x1080"])
+        layout.addRow(QLabel("Resolution:"), self.resolution_combo)
+
+        # Font size slider
+        font_size_slider = QSlider(Qt.Horizontal)
+        font_size_slider.setMinimum(10)
+        font_size_slider.setMaximum(30)
+        font_size_slider.setValue(14)  # Default value
+        font_size_slider.valueChanged.connect(self.update_font_size)
+        layout.addRow(QLabel("Universal Font Size:"), font_size_slider)
+
+        self.styles_tab.setLayout(layout)
+
+    def setup_upload_settings(self):
+        layout = QVBoxLayout()
         self.upload_site_combo = QComboBox()
         self.upload_site_combo.addItems(["Select Site", "YouTube", "Vimeo", "Custom..."])
         self.upload_site_combo.currentIndexChanged.connect(self.check_custom_upload_site)
@@ -44,125 +100,109 @@ class SettingsTab(QWidget):
         self.custom_site_input.setPlaceholderText("Custom Upload Site URL")
         self.custom_site_input.setVisible(False)
 
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Username (if required)")
-        self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Password (if required)")
-        self.password_input.setEchoMode(QLineEdit.Password)
+        layout.addWidget(QLabel("Upload Site:"))
+        layout.addWidget(self.upload_site_combo)
+        layout.addWidget(self.custom_site_input)
 
-        # Layout for playlist and thumbnails options
-        playlist_layout = QHBoxLayout()
-        playlist_layout.addWidget(self.playlist_checkbox)
-        thumbnail_layout = QHBoxLayout()
-        thumbnail_layout.addWidget(self.download_thumbnails_checkbox)
+        self.upload_settings_tab.setLayout(layout)
 
-        # Add to the main layout
-        self.layout.addLayout(playlist_layout)
-        self.layout.addLayout(thumbnail_layout)
+    def setup_download_settings(self):
+        layout = QFormLayout()
 
-        self.save_button = QPushButton("Save")
-        self.save_button.clicked.connect(self.save_settings)
+        # Default download folder selection
+        download_folder_label = QLabel("Default Download Folder:")
+        download_folder_path = QLineEdit()
+        browse_button = QPushButton("Browse...")
+        browse_button.clicked.connect(lambda: self.select_download_folder(download_folder_path))
 
-        self.layout.addWidget(self.quality_label)
-        self.layout.addWidget(self.quality_combo)
-        self.layout.addWidget(self.format_label)
-        self.layout.addWidget(self.format_combo)
-        self.layout.addWidget(self.playlist_checkbox)
-        self.layout.addWidget(self.download_thumbnails_checkbox)
-        self.layout.addWidget(self.theme_label)
-        self.layout.addWidget(self.theme_combo)
-        self.layout.addWidget(self.upload_settings_label)
-        self.layout.addWidget(self.upload_site_combo)
-        self.layout.addWidget(self.custom_site_input)
-        self.layout.addWidget(self.username_input)
-        self.layout.addWidget(self.password_input)
-        self.layout.addWidget(self.save_button)
-        self.layout.addWidget(self.default_view_label)
-        self.layout.addWidget(self.default_view_combo)
+        folder_layout = QHBoxLayout()
+        folder_layout.addWidget(download_folder_path)
+        folder_layout.addWidget(browse_button)
+        layout.addRow(download_folder_label, folder_layout)
 
-        self.setLayout(self.layout)
+        # Playlist download option
+        self.playlist_checkbox = QCheckBox("Download Playlists (True/False)")
+        self.playlist_checkbox.setChecked(True)
+        layout.addRow(self.playlist_checkbox)
 
-    def update_playlist_state(self, state):
-        # Update the label to show True or False
-        if state == Qt.Checked:
-            self.playlist_checkbox.setText("Download Playlists (True)")
-        else:
-            self.playlist_checkbox.setText("Download Playlists (False)")
+        # Download thumbnails option
+        self.download_thumbnails_checkbox = QCheckBox("Download Thumbnails")
+        self.download_thumbnails_checkbox.setChecked(True)
+        layout.addRow(self.download_thumbnails_checkbox)
 
-    def update_thumbnails_state(self, state):
-        # Update the label to show True or False
-        if state == Qt.Checked:
-            self.download_thumbnails_checkbox.setText("Download Thumbnails (True)")
-        else:
-            self.download_thumbnails_checkbox.setText("Download Thumbnails (False)")
-    
+        self.download_settings_tab.setLayout(layout)
+
+    def setup_proxy_settings(self):
+        layout = QFormLayout()
+
+        # Proxy type (HTTP, SOCKS5, etc.)
+        proxy_type_label = QLabel("Proxy Type:")
+        self.proxy_type_combo = QComboBox()
+        self.proxy_type_combo.addItems(["None", "HTTP", "SOCKS5"])
+        layout.addRow(proxy_type_label, self.proxy_type_combo)
+
+        # Proxy IP
+        self.proxy_ip_input = QLineEdit()
+        self.proxy_ip_input.setPlaceholderText("Proxy IP Address")
+        layout.addRow(QLabel("Proxy IP:"), self.proxy_ip_input)
+
+        # Proxy Port
+        self.proxy_port_input = QLineEdit()
+        self.proxy_port_input.setPlaceholderText("Proxy Port")
+        layout.addRow(QLabel("Proxy Port:"), self.proxy_port_input)
+
+        self.proxy_settings_tab.setLayout(layout)
+
+    def select_download_folder(self, download_folder_path):
+        folder = QFileDialog.getExistingDirectory(self, "Select Download Folder", "")
+        if folder:
+            download_folder_path.setText(folder)
+
+    def edit_theme(self):
+        selected_theme = self.theme_combo.currentText()
+        theme_file = os.path.join(os.getcwd(), 'themes', f"{selected_theme}.py")
+        if os.path.exists(theme_file):
+            os.startfile(theme_file)  # Replace with an editor tab if available
+
     def check_custom_upload_site(self, index):
         if self.upload_site_combo.currentText() == "Custom...":
             self.custom_site_input.setVisible(True)
         else:
             self.custom_site_input.setVisible(False)
 
-    def save_settings(self):
-        selected_theme = self.theme_combo.currentText()
-        self.apply_theme(selected_theme)
-        selected_quality = self.quality_combo.currentText()
-        selected_format = self.format_combo.currentText()
-        playlist_setting = self.playlist_checkbox.isChecked()
-        download_thumbnails = self.download_thumbnails_checkbox.isChecked()
-        upload_site = self.upload_site_combo.currentText()
-        if upload_site == "Custom...":
-            upload_site = self.custom_site_input.text()
-        settings = {
-            "quality": selected_quality,
-            "format": selected_format,
-            "theme": selected_theme,
-            "download_playlists": playlist_setting,
-            "download_thumbnails": download_thumbnails,
-            "upload_site": upload_site,
-            "username": self.username_input.text(),
-            "password": self.password_input.text(),
-            "default_history_view": self.default_view_combo.currentText(),
-        }
-        # Save settings to file
-        if not os.path.exists('data'):
-            os.makedirs('data')
-        with open("data/settings.json", "w", encoding='utf-8') as f:
-            json.dump(settings, f, ensure_ascii=False, indent=4)
-        QMessageBox.information(self, "Settings", "Settings applied successfully.")
+    def update_font_size(self, value):
+        font_size = f"{value}px"
+        self.parent().setStyleSheet(f"* {{ font-size: {font_size}; }}")
 
-    def apply_theme(self, theme_name):
-        self.window().apply_theme(theme_name)
+    def get_playlist_setting(self):
+        return self.download_thumbnails_checkbox.isChecked()
 
-    def get_quality(self):
-        return self.quality_combo.currentText()
-
-    def get_format(self):
-        return self.format_combo.currentText()
 
     def get_playlist_setting(self):
         return self.playlist_checkbox.isChecked()
 
-    def get_upload_site(self):
-        upload_site = self.upload_site_combo.currentText()
-        if upload_site == "Custom...":
-            return self.custom_site_input.text()
-        else:
-            return upload_site
 
-    def get_upload_credentials(self):
-        return {
-            'username': self.username_input.text(),
-            'password': self.password_input.text()
+    def save_download_info(self, data):
+        downloads_path = os.path.join(os.getcwd(), 'data', 'downloads.json')
+        try:
+            if os.path.exists(downloads_path):
+                with open(downloads_path, 'r') as file:
+                    existing_data = json.load(file)
+            else:
+                existing_data = []
+
+            existing_data.append(data)
+            with open(downloads_path, 'w') as file:
+                json.dump(existing_data, file, indent=4)
+        except Exception as e:
+            print(f"Error saving download information: {e}")
+
+    def download_completed(self, video_title, video_url, video_size, video_duration):
+        download_data = {
+            "title": video_title,
+            "url": video_url,
+            "size": video_size,
+            "duration": video_duration,
+            "status": "completed"
         }
-
-    def add_url_to_download_later(self, url):
-        json_file_path = os.path.join('data', 'download_later.json')
-        if os.path.exists(json_file_path):
-            with open(json_file_path, 'r', encoding='utf-8') as f:
-                urls = json.load(f)
-        else:
-            urls = []
-        if url not in urls:
-            urls.append(url)
-            with open(json_file_path, 'w', encoding='utf-8') as f:
-                json.dump(urls, f, indent=4)
+        self.save_download_info(download_data)
