@@ -1,11 +1,12 @@
 {
     "quality": "Best",
     "format": "MP4",
-    "theme": "Grey, White, Black",
+    "theme": "",
     "download_playlists": false,
     "download_thumbnails": true,
     "upload_site": "Select Site",
     "username": "",
     "password": "",
-    "default_history_view": "List View"
+    "default_history_view": "List View",
+    "api_key": ""
 }
