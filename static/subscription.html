@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription - UVDM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        
+        .pricing {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .features {
+            list-style: none;
+            margin: 20px 0;
+            text-align: left;
+            display: inline-block;
+        }
+        
+        .features li {
+            padding: 10px 0;
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-button {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .payment-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .payment-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .payment-button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .payment-icon {
+            font-size: 2.5rem;
+        }
+        
+        .payment-button.loading {
+            opacity: 0.7;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .alert.active {
+            display: block;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .admin-link {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .admin-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .admin-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading-providers {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🚀 UVDM Premium</h1>
+            <p class="subtitle">Unlock all features with a premium subscription</p>
+            
+            <div class="pricing">
+                <div class="price">$9.99<span style="font-size: 1.5rem;">/month</span></div>
+                <ul class="features">
+                    <li>Unlimited video downloads</li>
+                    <li>Priority download speeds</li>
+                    <li>Batch download support</li>
+                    <li>Playlist downloads</li>
+                    <li>Premium support</li>
+                    <li>No ads</li>
+                </ul>
+            </div>
+            
+            <div id="alertContainer"></div>
+            
+            <div id="loadingProviders" class="loading-providers">
+                <div class="spinner"></div>
+                <p>Loading payment methods...</p>
+            </div>
+            
+            <div id="paymentSection" style="display: none;">
+                <h2>Choose Payment Method</h2>
+                <div id="paymentMethods" class="payment-methods"></div>
+                
+                <div class="admin-link">
+                    <p>Need to configure payment providers?</p>
+                    <a href="/admin/payments" target="_blank">Go to Admin Panel →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Payment provider icons
+        const providerIcons = {
+            'stripe': '💳',
+            'paypal': '🅿️',
+            'wise': '💸',
+            'crypto': '₿'
+        };
+        
+        // Show alert
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} active`;
+            alertDiv.textContent = message;
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.classList.remove('active');
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 5000);
+        }
+        
+        // Load available payment providers
+        async function loadPaymentProviders() {
+            try {
+                const response = await fetch('/api/payments/providers');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load payment providers');
+                }
+                
+                renderPaymentMethods(data.providers);
+                
+                document.getElementById('loadingProviders').style.display = 'none';
+                document.getElementById('paymentSection').style.display = 'block';
+                
+                if (data.providers.length === 0) {
+                    showAlert('No payment providers are currently enabled. Please contact the administrator.', 'info');
+                }
+            } catch (error) {
+                document.getElementById('loadingProviders').style.display = 'none';
+                document.getElementById('paymentSection').style.display = 'block';
+                showAlert('Failed to load payment providers: ' + error.message, 'error');
+            }
+        }
+        
+        // Render payment method buttons
+        function renderPaymentMethods(providers) {
+            const container = document.getElementById('paymentMethods');
+            container.innerHTML = '';
+            
+            if (providers.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #666;">No payment methods available</p>';
+                return;
+            }
+            
+            providers.forEach(provider => {
+                const button = document.createElement('button');
+                button.className = 'payment-button';
+                button.onclick = () => initiatePayment(provider.provider_key);
+                
+                const icon = providerIcons[provider.provider_key] || '💰';
+                
+                button.innerHTML = `
+                    <div class="payment-icon">${icon}</div>
+                    <div>${provider.provider_name}</div>
+                `;
+                
+                container.appendChild(button);
+            });
+        }
+        
+        // Initiate payment
+        async function initiatePayment(providerKey) {
+            const button = event.target.closest('.payment-button');
+            
+            if (button.disabled) return;
+            
+            button.disabled = true;
+            button.classList.add('loading');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<div class="spinner"></div><div>Processing...</div>';
+            
+            try {
+                const response = await fetch(`/api/payments/${providerKey}/create-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: 999, // $9.99
+                        currency: 'usd',
+                        metadata: {
+                            product: 'UVDM Premium',
+                            period: 'monthly'
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    // Check if provider is not configured
+                    if (response.status === 501 || data.error.includes('not configured')) {
+                        showAlert(
+                            `${providerKey} is not configured. Please ask the administrator to add API keys in the admin panel.`,
+                            'error'
+                        );
+                    } else {
+                        throw new Error(data.error || 'Payment initiation failed');
+                    }
+                } else {
+                    // In a real implementation, redirect to checkout_url
+                    showAlert(
+                        `Mock payment session created! In production, you would be redirected to ${data.checkout_url}`,
+                        'success'
+                    );
+                    
+                    // Simulate payment completion after 2 seconds
+                    setTimeout(() => {
+                        confirmPayment(providerKey, data.session_id);
+                    }, 2000);
+                }
+            } catch (error) {
+                showAlert('Payment failed: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                button.classList.remove('loading');
+                button.innerHTML = originalHTML;
+            }
+        }
+        
+        // Confirm payment
+        async function confirmPayment(providerKey, sessionId) {
+            try {
+                const response = await fetch(`/api/payments/${providerKey}/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Payment confirmed! Thank you for subscribing to UVDM Premium.', 'success');
+                } else {
+                    showAlert('Payment confirmation failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('Payment confirmation failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPaymentProviders();
+        });
+    </script>
+</body>
+</html>

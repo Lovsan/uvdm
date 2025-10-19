@@ -66,6 +66,9 @@ data/licenses.json
 data/license_cache.json
 data/api_keys.json
 
+# Payment database (should not be committed)
+data/payments.db
+
 # Flask stuff:
 instance/
 .webassets-cache

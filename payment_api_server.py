@@ -1,0 +1,360 @@
+"""
+Extended API Server with Payment Support
+
+This is an extended version of the UVDM API server that includes
+payment provider management, webhook handling, and admin UI.
+
+To use this server instead of the basic api_server.py, run:
+    python payment_api_server.py
+
+Configuration:
+- Set UVDM_ADMIN_KEY environment variable for admin authentication
+- Database will be created automatically at data/payments.db
+"""
+
+from flask import Flask, request, jsonify, send_from_directory
+import json
+import os
+import hashlib
+from datetime import datetime, timedelta
+import secrets
+
+# Import payment routes
+from server.routes.admin.payments import admin_payments_bp
+from server.routes.webhooks import webhooks_bp
+
+# Import database initialization
+from db.init_db import init_database
+
+
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+
+# Configuration
+LICENSE_FILE = os.path.join('data', 'licenses.json')
+API_KEYS_FILE = os.path.join('data', 'api_keys.json')
+
+# Ensure data directory exists
+os.makedirs('data', exist_ok=True)
+
+# Initialize payment database
+print("Initializing payment database...")
+init_database()
+
+# Register payment blueprints
+app.register_blueprint(admin_payments_bp)
+app.register_blueprint(webhooks_bp)
+
+
+# ============================================================================
+# License Management (from original api_server.py)
+# ============================================================================
+
+def load_licenses():
+    """Load licenses from JSON file."""
+    if os.path.exists(LICENSE_FILE):
+        try:
+            with open(LICENSE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+    return {}
+
+
+def save_licenses(licenses):
+    """Save licenses to JSON file."""
+    with open(LICENSE_FILE, 'w', encoding='utf-8') as f:
+        json.dump(licenses, f, indent=2, ensure_ascii=False)
+
+
+def load_api_keys():
+    """Load API keys from JSON file."""
+    if os.path.exists(API_KEYS_FILE):
+        try:
+            with open(API_KEYS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return {}
+    return {}
+
+
+def save_api_keys(api_keys):
+    """Save API keys to JSON file."""
+    with open(API_KEYS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(api_keys, f, indent=2, ensure_ascii=False)
+
+
+def generate_license_key():
+    """Generate a unique license key."""
+    random_part = secrets.token_hex(16)
+    return f"UVDM-{random_part[:8].upper()}-{random_part[8:16].upper()}-{random_part[16:24].upper()}-{random_part[24:].upper()}"
+
+
+def hash_machine_id(machine_id):
+    """Hash the machine ID for storage."""
+    return hashlib.sha256(machine_id.encode()).hexdigest()
+
+
+@app.route('/')
+def index():
+    """API root endpoint."""
+    return jsonify({
+        'name': 'UVDM License & Payment Server',
+        'version': '2.0.0',
+        'status': 'running',
+        'endpoints': {
+            '/api/license/verify': 'POST - Verify a license key',
+            '/api/license/activate': 'POST - Activate a license key',
+            '/api/license/deactivate': 'POST - Deactivate a license key',
+            '/api/license/status': 'GET - Check license status',
+            '/api/license/generate': 'POST - Generate a new license key (admin)',
+            '/api/admin/payments': 'GET/POST - Manage payment providers (admin)',
+            '/api/webhooks/:provider': 'POST - Receive payment webhooks',
+            '/api/payments/:provider/create-session': 'POST - Create payment session',
+            '/admin/payments': 'GET - Admin UI for payment management'
+        }
+    })
+
+
+@app.route('/api/license/verify', methods=['POST'])
+def verify_license():
+    """Verify if a license key is valid."""
+    data = request.get_json()
+    
+    if not data or 'license_key' not in data:
+        return jsonify({'valid': False, 'error': 'Missing license_key'}), 400
+    
+    license_key = data['license_key']
+    machine_id = data.get('machine_id', '')
+    
+    licenses = load_licenses()
+    
+    if license_key not in licenses:
+        return jsonify({
+            'valid': False,
+            'error': 'Invalid license key'
+        }), 404
+    
+    license_info = licenses[license_key]
+    
+    # Check if license is expired
+    if 'expiry_date' in license_info and license_info['expiry_date']:
+        expiry_date = datetime.fromisoformat(license_info['expiry_date'])
+        if datetime.now() > expiry_date:
+            return jsonify({
+                'valid': False,
+                'error': 'License expired',
+                'expiry_date': license_info['expiry_date']
+            }), 403
+    
+    # Check if license is active
+    if not license_info.get('active', False):
+        return jsonify({
+            'valid': False,
+            'error': 'License is not active'
+        }), 403
+    
+    # Check machine binding if present
+    if machine_id and license_info.get('machine_id'):
+        hashed_machine_id = hash_machine_id(machine_id)
+        if license_info['machine_id'] != hashed_machine_id:
+            return jsonify({
+                'valid': False,
+                'error': 'License is bound to a different machine'
+            }), 403
+    
+    return jsonify({
+        'valid': True,
+        'license_type': license_info.get('license_type', 'standard'),
+        'expiry_date': license_info.get('expiry_date'),
+        'features': license_info.get('features', [])
+    })
+
+
+@app.route('/api/license/activate', methods=['POST'])
+def activate_license():
+    """Activate a license key for a specific machine."""
+    data = request.get_json()
+    
+    if not data or 'license_key' not in data or 'machine_id' not in data:
+        return jsonify({'success': False, 'error': 'Missing license_key or machine_id'}), 400
+    
+    license_key = data['license_key']
+    machine_id = data['machine_id']
+    
+    licenses = load_licenses()
+    
+    if license_key not in licenses:
+        return jsonify({
+            'success': False,
+            'error': 'Invalid license key'
+        }), 404
+    
+    license_info = licenses[license_key]
+    
+    # Check if already bound to another machine
+    if license_info.get('machine_id') and license_info['machine_id'] != hash_machine_id(machine_id):
+        return jsonify({
+            'success': False,
+            'error': 'License already activated on another machine'
+        }), 403
+    
+    # Activate the license
+    licenses[license_key]['machine_id'] = hash_machine_id(machine_id)
+    licenses[license_key]['active'] = True
+    licenses[license_key]['activated_at'] = datetime.now().isoformat()
+    
+    save_licenses(licenses)
+    
+    return jsonify({
+        'success': True,
+        'message': 'License activated successfully',
+        'license_type': license_info.get('license_type', 'standard'),
+        'expiry_date': license_info.get('expiry_date')
+    })
+
+
+@app.route('/api/license/deactivate', methods=['POST'])
+def deactivate_license():
+    """Deactivate a license key."""
+    data = request.get_json()
+    
+    if not data or 'license_key' not in data:
+        return jsonify({'success': False, 'error': 'Missing license_key'}), 400
+    
+    license_key = data['license_key']
+    machine_id = data.get('machine_id', '')
+    
+    licenses = load_licenses()
+    
+    if license_key not in licenses:
+        return jsonify({
+            'success': False,
+            'error': 'Invalid license key'
+        }), 404
+    
+    license_info = licenses[license_key]
+    
+    # Verify machine ID if provided
+    if machine_id and license_info.get('machine_id'):
+        hashed_machine_id = hash_machine_id(machine_id)
+        if license_info['machine_id'] != hashed_machine_id:
+            return jsonify({
+                'success': False,
+                'error': 'Cannot deactivate license from different machine'
+            }), 403
+    
+    # Deactivate the license
+    licenses[license_key]['active'] = False
+    licenses[license_key]['deactivated_at'] = datetime.now().isoformat()
+    
+    save_licenses(licenses)
+    
+    return jsonify({
+        'success': True,
+        'message': 'License deactivated successfully'
+    })
+
+
+@app.route('/api/license/status', methods=['GET'])
+def license_status():
+    """Get status of all licenses (admin endpoint)."""
+    licenses = load_licenses()
+    
+    status = {
+        'total_licenses': len(licenses),
+        'active_licenses': sum(1 for lic in licenses.values() if lic.get('active', False)),
+        'expired_licenses': 0
+    }
+    
+    # Count expired licenses
+    now = datetime.now()
+    for lic in licenses.values():
+        if 'expiry_date' in lic and lic['expiry_date']:
+            try:
+                expiry_date = datetime.fromisoformat(lic['expiry_date'])
+                if now > expiry_date:
+                    status['expired_licenses'] += 1
+            except (ValueError, TypeError):
+                pass
+    
+    return jsonify(status)
+
+
+@app.route('/api/license/generate', methods=['POST'])
+def generate_license():
+    """Generate a new license key (admin endpoint)."""
+    data = request.get_json() or {}
+    
+    # Simple admin authentication (in production, use proper authentication)
+    admin_key = data.get('admin_key', '')
+    if admin_key != os.environ.get('UVDM_ADMIN_KEY', 'admin123'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+    
+    license_key = generate_license_key()
+    
+    # Set license parameters
+    license_type = data.get('license_type', 'standard')
+    duration_days = data.get('duration_days', 365)
+    features = data.get('features', ['download', 'upload', 'playlist', 'batch'])
+    
+    expiry_date = None
+    if duration_days > 0:
+        expiry_date = (datetime.now() + timedelta(days=duration_days)).isoformat()
+    
+    licenses = load_licenses()
+    
+    licenses[license_key] = {
+        'license_type': license_type,
+        'created_at': datetime.now().isoformat(),
+        'expiry_date': expiry_date,
+        'active': False,
+        'features': features,
+        'machine_id': None
+    }
+    
+    save_licenses(licenses)
+    
+    return jsonify({
+        'success': True,
+        'license_key': license_key,
+        'license_type': license_type,
+        'expiry_date': expiry_date,
+        'features': features
+    })
+
+
+# ============================================================================
+# Admin UI Routes
+# ============================================================================
+
+@app.route('/admin/payments')
+def admin_payments_ui():
+    """Serve the admin payments UI."""
+    return send_from_directory('static', 'admin-payments.html')
+
+
+if __name__ == '__main__':
+    # Run the server
+    port = int(os.environ.get('UVDM_API_PORT', 5000))
+    host = os.environ.get('UVDM_API_HOST', '0.0.0.0')
+    debug = os.environ.get('UVDM_API_DEBUG', 'False').lower() == 'true'
+    admin_key = os.environ.get('UVDM_ADMIN_KEY', 'admin123')
+    
+    print(f"Starting UVDM License & Payment Server on {host}:{port}")
+    print(f"Debug mode: {debug}")
+    
+    # Security warning
+    if admin_key == 'admin123':
+        print("\n" + "="*60)
+        print("⚠️  SECURITY WARNING ⚠️")
+        print("="*60)
+        print("You are using the DEFAULT admin key 'admin123'")
+        print("This is INSECURE and should ONLY be used for testing!")
+        print("\nFor production, set a secure admin key:")
+        print("  export UVDM_ADMIN_KEY=$(python -c \"import secrets; print(secrets.token_urlsafe(32))\")")
+        print("="*60 + "\n")
+    
+    print("\nAdmin UI available at: http://localhost:5000/admin/payments")
+    print("API Documentation: http://localhost:5000/\n")
+    
+    app.run(host=host, port=port, debug=debug)
