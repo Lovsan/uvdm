@@ -13,6 +13,7 @@ UVDM is a powerful and easy-to-use tool for downloading and managing videos from
 - **Manage Downloads**: Resume, rename, delete, or play downloads directly from the app.
 - **Active Downloads Overview**: Monitor active downloads, network usage, and storage usage.
 - **yt-dlp Integration**: Built on top of [yt-dlp](https://github.com/yt-dlp/yt-dlp) for reliable and powerful downloading capabilities.
+- **License Management System**: Optional API-based license verification and management for enterprise deployments.
 
 ## Installation
 
@@ -30,6 +31,22 @@ To start UVDM, run the following command:
 
 ```sh
 python main.py
+```
+
+Or use the convenience startup script:
+
+```sh
+# Linux/Mac
+./start_uvdm.sh
+
+# With API server
+./start_uvdm.sh --with-api-server
+
+# Windows
+start_uvdm.bat
+
+# With API server
+start_uvdm.bat --with-api-server
 ```
 
 Once the application launches, you can use the following features:
@@ -56,7 +73,46 @@ Once the application launches, you can use the following features:
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 - Python 3.7+
+- Flask (for API server)
 - Additional Python packages (listed in `requirements.txt`)
+
+## API System and License Management
+
+UVDM includes an optional API system for license verification and management. This is particularly useful for enterprise deployments or when you want to manage license distribution.
+
+### Quick Start with API Server
+
+1. Start the API server:
+   ```sh
+   python api_server.py
+   ```
+
+2. Generate a license (admin access):
+   ```sh
+   curl -X POST http://localhost:5000/api/license/generate \
+     -H "Content-Type: application/json" \
+     -d '{"admin_key": "admin123", "license_type": "standard", "duration_days": 365}'
+   ```
+
+3. Use the License Manager in UVDM:
+   - Launch UVDM
+   - Go to Help > License Manager
+   - Enter your license key and activate it
+
+For detailed API documentation, see [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md).
+
+### Configuration
+
+Edit `api_config.env` to configure the API server:
+
+```env
+UVDM_API_HOST=0.0.0.0
+UVDM_API_PORT=5000
+UVDM_ADMIN_KEY=your_secure_admin_key
+UVDM_LICENSE_SERVER=http://localhost:5000
+```
+
+**Important**: Change the default admin key in production!
 
 ## License
 

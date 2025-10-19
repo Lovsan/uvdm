@@ -61,6 +61,11 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# License data (should not be committed)
+data/licenses.json
+data/license_cache.json
+data/api_keys.json
+
 # Flask stuff:
 instance/
 .webassets-cache

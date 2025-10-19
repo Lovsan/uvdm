@@ -3,7 +3,7 @@ import sys
 import psutil
 import json
 from PyQt5.QtWidgets import (
-    QMainWindow, QTabWidget, QStatusBar, QLabel, QApplication, QMessageBox
+    QMainWindow, QTabWidget, QStatusBar, QLabel, QApplication, QMessageBox, QAction, QMenu
 )
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QTimer
@@ -16,6 +16,7 @@ from app.about_tab import AboutTab
 from app.clipboard_monitor import ClipboardMonitor
 from app.themes import themes
 from app.my_playlists_tab import MyPlaylistsTab
+from app.license_dialog import show_license_dialog
 #from app.my_playlists import PlaylistManager
 
 
@@ -51,6 +52,9 @@ class YTDLPApp(QMainWindow):
 
         self.setCentralWidget(self.tabs)
 
+        # Create menu bar
+        self.create_menu_bar()
+
         # Apply default theme
         self.apply_theme_on_startup()
 
@@ -61,6 +65,74 @@ class YTDLPApp(QMainWindow):
 
         # Add system statistics
         self.init_system_statistics()
+        
+        # Optional: Check license on startup (non-blocking)
+        self.check_license_on_startup()
+
+    def check_license_on_startup(self):
+        """Check license on startup (non-blocking and non-intrusive)."""
+        try:
+            from app.license_client import LicenseClient
+            
+            # Get server URL from environment or config
+            server_url = os.environ.get('UVDM_LICENSE_SERVER')
+            
+            # Only check if server URL is configured
+            if server_url:
+                client = LicenseClient(server_url=server_url)
+                cache = client._load_cache()
+                
+                if cache.get('license_key'):
+                    # Verify cached license (with offline fallback)
+                    result = client.verify_license(cache['license_key'], offline_mode=False)
+                    
+                    if not result.get('valid'):
+                        # Show non-intrusive status bar message
+                        self.statusBar.showMessage(
+                            "License verification failed. Check Help > License Manager for details.",
+                            10000  # Show for 10 seconds
+                        )
+                else:
+                    # No license found - show friendly message
+                    self.statusBar.showMessage(
+                        "No license found. Visit Help > License Manager to activate your license.",
+                        10000
+                    )
+        except Exception as e:
+            # Silent fail - don't block the application
+            print(f"License check error (non-critical): {e}")
+
+    def create_menu_bar(self):
+        """Create the application menu bar."""
+        menubar = self.menuBar()
+        
+        # Help menu
+        help_menu = menubar.addMenu('&Help')
+        
+        # License manager action
+        license_action = QAction('&License Manager', self)
+        license_action.setStatusTip('Manage your UVDM license')
+        license_action.triggered.connect(self.show_license_manager)
+        help_menu.addAction(license_action)
+        
+        # About action
+        about_action = QAction('&About', self)
+        about_action.setStatusTip('About UVDM')
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+    
+    def show_license_manager(self):
+        """Show the license manager dialog."""
+        server_url = os.environ.get('UVDM_LICENSE_SERVER', 'http://localhost:5000')
+        show_license_dialog(self, server_url)
+    
+    def show_about(self):
+        """Show about information."""
+        # Switch to About tab
+        for i in range(self.tabs.count()):
+            if self.tabs.tabText(i) == "About":
+                self.tabs.setCurrentIndex(i)
+                break
 
     def init_system_statistics(self):
         self.statusBar = QStatusBar()
