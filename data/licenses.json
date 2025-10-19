@@ -1,0 +1,30 @@
+{
+  "UVDM-61558DF9-9452B084-21F6957C-EC62BF41": {
+    "license_type": "standard",
+    "created_at": "2025-10-19T17:50:36.588188",
+    "expiry_date": "2026-10-19T17:50:36.588140",
+    "active": true,
+    "features": [
+      "download",
+      "upload",
+      "playlist",
+      "batch"
+    ],
+    "machine_id": "9441433d40cae33c0eb4cf3afa5ac7415e5748cb3526c205460298417b001658",
+    "activated_at": "2025-10-19T17:50:45.114765"
+  },
+  "UVDM-51DC6745-79377B5B-595582A9-CC145BED": {
+    "license_type": "premium",
+    "created_at": "2025-10-19T17:51:31.698115",
+    "expiry_date": "2027-10-19T17:51:31.698007",
+    "active": true,
+    "features": [
+      "download",
+      "upload",
+      "playlist",
+      "batch"
+    ],
+    "machine_id": "1de71d7f2cfa7017e2d1675c9a2940256212c172e9d2e25c282fb754bf6a7188",
+    "activated_at": "2025-10-19T17:51:47.434052"
+  }
+}
