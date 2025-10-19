@@ -295,8 +295,20 @@ if __name__ == '__main__':
     port = int(os.environ.get('UVDM_API_PORT', 5000))
     host = os.environ.get('UVDM_API_HOST', '0.0.0.0')
     debug = os.environ.get('UVDM_API_DEBUG', 'False').lower() == 'true'
+    admin_key = os.environ.get('UVDM_ADMIN_KEY', 'admin123')
     
     print(f"Starting UVDM License Server on {host}:{port}")
     print(f"Debug mode: {debug}")
+    
+    # Security warning
+    if admin_key == 'admin123':
+        print("\n" + "="*60)
+        print("⚠️  SECURITY WARNING ⚠️")
+        print("="*60)
+        print("You are using the DEFAULT admin key 'admin123'")
+        print("This is INSECURE and should ONLY be used for testing!")
+        print("\nFor production, set a secure admin key:")
+        print("  export UVDM_ADMIN_KEY=$(python -c \"import secrets; print(secrets.token_urlsafe(32))\")")
+        print("="*60 + "\n")
     
     app.run(host=host, port=port, debug=debug)

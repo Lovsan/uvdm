@@ -51,6 +51,8 @@ curl -X POST http://localhost:5000/api/license/generate \
   }'
 ```
 
+**⚠️ Security Note**: The example uses the default admin key `admin123` for demonstration only. In production, you MUST change this to a secure random key (see Production Deployment section below).
+
 Response:
 ```json
 {
@@ -175,10 +177,23 @@ curl -X POST http://localhost:5000/api/license/deactivate \
 
 For production use:
 
-1. **Change the admin key**:
+1. **Generate and set a secure admin key**:
+   
+   The admin key should be:
+   - At least 32 characters long
+   - Include uppercase, lowercase, numbers, and special characters
+   - Generated using a cryptographically secure random generator
+   
+   Example generation:
    ```bash
-   export UVDM_ADMIN_KEY=your_very_secure_random_key
+   # Linux/Mac - generate a secure random key
+   export UVDM_ADMIN_KEY=$(openssl rand -base64 32)
+   
+   # Or use Python
+   python -c "import secrets; print(secrets.token_urlsafe(32))"
    ```
+   
+   Save this key securely (e.g., in a password manager or secrets management system).
 
 2. **Use HTTPS**: Deploy behind a reverse proxy like nginx with SSL/TLS
 
@@ -225,13 +240,16 @@ Here's a complete example from start to finish:
 python api_server.py
 
 # Terminal 2: Generate and use license
-# Generate license
+# Generate license (using default key for demo - CHANGE IN PRODUCTION!)
 LICENSE_KEY=$(curl -s -X POST http://localhost:5000/api/license/generate \
   -H "Content-Type: application/json" \
   -d '{"admin_key": "admin123", "license_type": "premium", "duration_days": 365}' \
   | python -c "import sys, json; print(json.load(sys.stdin)['license_key'])")
 
 echo "Generated license: $LICENSE_KEY"
+
+# Note: In production, use a secure admin key:
+# python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 # Activate license
 curl -X POST http://localhost:5000/api/license/activate \
