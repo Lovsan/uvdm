@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QTextEdit
 from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QFont
+from app.platform_icons_widget import PlatformIconsWidget
 import yt_dlp
 import time
 
@@ -78,6 +79,10 @@ Enjoy a seamless video downloading experience!
         self.intro_thread.update_text.connect(self.update_intro_text)
         self.intro_thread.clear_text.connect(self.clear_intro_text)
         self.intro_thread.start()
+
+        # Add platform icons widget
+        self.platform_icons_widget = PlatformIconsWidget()
+        self.layout.addWidget(self.platform_icons_widget)
 
         # Add a button to view supported sites
         self.supported_sites_button = QPushButton("View Supported Sites")
