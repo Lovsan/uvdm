@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt, QEvent, QThread
 from PyQt5.QtGui import QIcon, QPixmap, QFontMetrics
 from app.clickable_label import ClickableLabel
 from app.upload_worker import UploadWorker
+from app.video_preview_dialog import VideoPreviewDialog
 
 class DownloadsHistoryTab(QWidget):
     def __init__(self, settings_tab):
@@ -109,18 +110,21 @@ class DownloadsHistoryTab(QWidget):
             data = item.data(0, Qt.UserRole)
             if data['type'] == 'file':
                 play_action = QAction(QIcon("icons/play.png"), "Play", self)
+                preview_trim_action = QAction(QIcon("icons/video.png"), "Preview && Trim", self)
                 rename_action = QAction(QIcon("icons/rename.png"), "Rename", self)
                 delete_action = QAction(QIcon("icons/delete.png"), "Delete", self)
                 upload_action = QAction(QIcon("icons/upload.png"), "Upload", self)
                 details_action = QAction(QIcon("icons/info.png"), "Details", self)
 
                 play_action.triggered.connect(lambda: self.play_video(item))
+                preview_trim_action.triggered.connect(lambda: self.preview_and_trim_video(item))
                 rename_action.triggered.connect(lambda: self.rename_video(item))
                 delete_action.triggered.connect(lambda: self.delete_video(item))
                 upload_action.triggered.connect(lambda: self.upload_video(item))
                 details_action.triggered.connect(lambda: self.show_video_details(data))
 
                 menu.addAction(play_action)
+                menu.addAction(preview_trim_action)
                 menu.addAction(rename_action)
                 menu.addAction(delete_action)
                 menu.addAction(upload_action)
@@ -295,18 +299,21 @@ class DownloadsHistoryTab(QWidget):
             # Simulate right-click menu
             menu = QMenu()
             play_action = QAction(QIcon("icons/play.png"), "Play", self)
+            preview_trim_action = QAction(QIcon("icons/video.png"), "Preview && Trim", self)
             rename_action = QAction(QIcon("icons/rename.png"), "Rename", self)
             delete_action = QAction(QIcon("icons/delete.png"), "Delete", self)
             upload_action = QAction(QIcon("icons/upload.png"), "Upload", self)
             details_action = QAction(QIcon("icons/info.png"), "Details", self)
 
             play_action.triggered.connect(lambda: self.play_video_grid(video_data))
+            preview_trim_action.triggered.connect(lambda: self.preview_and_trim_video_grid(video_data))
             rename_action.triggered.connect(lambda: self.rename_video_grid(video_data))
             delete_action.triggered.connect(lambda: self.delete_video_grid(video_data))
             upload_action.triggered.connect(lambda: self.upload_video_grid(video_data))
             details_action.triggered.connect(lambda: self.show_video_details(video_data))
 
             menu.addAction(play_action)
+            menu.addAction(preview_trim_action)
             menu.addAction(rename_action)
             menu.addAction(delete_action)
             menu.addAction(upload_action)
@@ -325,6 +332,39 @@ class DownloadsHistoryTab(QWidget):
         else:
             QMessageBox.warning(self, "File Error", "The video file could not be found.")
 
+    def preview_and_trim_video(self, item):
+        """Open video preview and trim dialog."""
+        data = item.data(0, Qt.UserRole)
+        video_path = data.get('path')
+        video_duration = data.get('duration', 0)
+        
+        # Convert duration string to seconds if needed
+        if isinstance(video_duration, str):
+            try:
+                # Parse duration like "00:05:30" or "5:30"
+                parts = video_duration.split(':')
+                if len(parts) == 3:
+                    h, m, s = parts
+                    video_duration = int(h) * 3600 + int(m) * 60 + int(s)
+                elif len(parts) == 2:
+                    m, s = parts
+                    video_duration = int(m) * 60 + int(s)
+                else:
+                    video_duration = int(parts[0])
+            except:
+                video_duration = 0
+        
+        if video_path and os.path.exists(video_path):
+            # Open preview dialog
+            dialog = VideoPreviewDialog(
+                video_path=video_path,
+                video_duration=video_duration,
+                parent=self
+            )
+            dialog.exec_()
+        else:
+            QMessageBox.warning(self, "File Error", "The video file could not be found.")
+
     def play_video_grid(self, video_data):
         """Plays the selected video from the grid."""
         video_path = video_data.get("path")
@@ -336,6 +376,38 @@ class DownloadsHistoryTab(QWidget):
                 QMessageBox.critical(self, "Play Error", f"An error occurred while trying to play the video: {str(e)}")
         else:
             QMessageBox.warning(self, "File Not Found", "The video file could not be found.")
+
+    def preview_and_trim_video_grid(self, video_data):
+        """Open video preview and trim dialog from grid view."""
+        video_path = video_data.get('path')
+        video_duration = video_data.get('duration', 0)
+        
+        # Convert duration string to seconds if needed
+        if isinstance(video_duration, str):
+            try:
+                # Parse duration like "00:05:30" or "5:30"
+                parts = video_duration.split(':')
+                if len(parts) == 3:
+                    h, m, s = parts
+                    video_duration = int(h) * 3600 + int(m) * 60 + int(s)
+                elif len(parts) == 2:
+                    m, s = parts
+                    video_duration = int(m) * 60 + int(s)
+                else:
+                    video_duration = int(parts[0])
+            except:
+                video_duration = 0
+        
+        if video_path and os.path.exists(video_path):
+            # Open preview dialog
+            dialog = VideoPreviewDialog(
+                video_path=video_path,
+                video_duration=video_duration,
+                parent=self
+            )
+            dialog.exec_()
+        else:
+            QMessageBox.warning(self, "File Error", "The video file could not be found.")
 
 
     def rename_video(self, item):
