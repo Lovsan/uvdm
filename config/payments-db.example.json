@@ -1,0 +1,102 @@
+{
+  "database": {
+    "type": "sqlite",
+    "path": "data/payments.db",
+    "description": "SQLite database for payment provider and webhook settings"
+  },
+  "initialization": {
+    "auto_migrate": true,
+    "description": "Automatically run migrations on server startup"
+  },
+  "migration_commands": {
+    "manual_init": "python db/init_db.py",
+    "custom_db_path": "python db/init_db.py /path/to/custom.db"
+  },
+  "payment_providers": {
+    "stripe": {
+      "description": "Stripe payment provider",
+      "config_keys": {
+        "api_key": "sk_live_... or sk_test_... from Stripe dashboard",
+        "publishable_key": "pk_live_... or pk_test_... from Stripe dashboard",
+        "test_mode": "true for test mode, false for live mode",
+        "webhook_secret": "whsec_... from Stripe webhook settings"
+      },
+      "setup_instructions": [
+        "1. Sign up at https://stripe.com",
+        "2. Get API keys from https://dashboard.stripe.com/apikeys",
+        "3. Add keys to provider config via admin UI at /admin/payments",
+        "4. Create webhook at https://dashboard.stripe.com/webhooks",
+        "5. Set webhook URL to https://yourserver.com/api/webhooks/stripe",
+        "6. Copy webhook secret and add to webhook settings in admin UI"
+      ]
+    },
+    "paypal": {
+      "description": "PayPal payment provider",
+      "config_keys": {
+        "client_id": "Client ID from PayPal developer dashboard",
+        "client_secret": "Secret from PayPal developer dashboard",
+        "test_mode": "true for sandbox, false for live"
+      },
+      "setup_instructions": [
+        "1. Sign up at https://developer.paypal.com",
+        "2. Create an app in the PayPal Developer Dashboard",
+        "3. Get Client ID and Secret from app settings",
+        "4. Add credentials to provider config via admin UI",
+        "5. Configure webhooks in PayPal dashboard (optional)"
+      ]
+    },
+    "wise": {
+      "description": "Wise (TransferWise) payment provider",
+      "config_keys": {
+        "api_token": "API token from Wise dashboard",
+        "test_mode": "true for sandbox, false for live"
+      },
+      "setup_instructions": [
+        "1. Sign up at https://wise.com",
+        "2. Generate API token from settings",
+        "3. Add token to provider config via admin UI"
+      ]
+    },
+    "crypto": {
+      "description": "Cryptocurrency payment provider",
+      "config_keys": {
+        "btc_address": "Bitcoin wallet address",
+        "eth_address": "Ethereum wallet address",
+        "test_mode": "true for testnet, false for mainnet"
+      },
+      "setup_instructions": [
+        "1. Set up cryptocurrency wallets",
+        "2. Add wallet addresses to provider config via admin UI",
+        "3. Monitor payments manually or integrate with a payment processor"
+      ]
+    }
+  },
+  "webhook_configuration": {
+    "description": "Configure webhooks to receive payment notifications",
+    "webhook_url_format": "https://yourserver.com/api/webhooks/{provider_key}",
+    "security": {
+      "webhook_secret": "Generate a secure secret in the admin UI",
+      "signature_verification": "Webhooks are verified using provider-specific signature methods"
+    },
+    "testing": {
+      "test_endpoint": "/api/webhooks/{provider_key}/test",
+      "description": "Use the admin UI to send test webhooks"
+    }
+  },
+  "admin_authentication": {
+    "environment_variable": "UVDM_ADMIN_KEY",
+    "description": "Set this environment variable to protect admin endpoints",
+    "header_name": "X-Admin-Key",
+    "example": "export UVDM_ADMIN_KEY=$(python -c \"import secrets; print(secrets.token_urlsafe(32))\")",
+    "note": "If UVDM_ADMIN_KEY is not set, admin endpoints are unprotected (development only)"
+  },
+  "server_startup": {
+    "command": "python payment_api_server.py",
+    "environment_variables": {
+      "UVDM_API_HOST": "0.0.0.0",
+      "UVDM_API_PORT": "5000",
+      "UVDM_API_DEBUG": "False",
+      "UVDM_ADMIN_KEY": "your_secure_admin_key_here"
+    }
+  }
+}

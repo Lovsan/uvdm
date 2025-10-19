@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Provider Admin - UVDM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .provider-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .provider-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        
+        .provider-card.enabled {
+            border-color: #4caf50;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        }
+        
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .provider-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .provider-icon {
+            font-size: 2rem;
+        }
+        
+        .provider-key {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .provider-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .provider-status.enabled {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .provider-status.disabled {
+            background: #f44336;
+            color: white;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #616161;
+        }
+        
+        .btn-add {
+            background: #4caf50;
+            color: white;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            display: inline-block;
+            border-radius: 8px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 120px;
+            font-family: monospace;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .webhook-list {
+            margin-top: 20px;
+        }
+        
+        .webhook-item {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .webhook-item.enabled {
+            border-left-color: #4caf50;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .secret-field {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .secret-field input {
+            flex: 1;
+        }
+        
+        .btn-icon {
+            padding: 10px 15px;
+            flex: 0;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 Payment Provider Admin</h1>
+        
+        <div id="alertContainer"></div>
+        
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Payment Providers</h2>
+                <button class="btn-add" onclick="showAddProviderModal()">+ Add Provider</button>
+            </div>
+            
+            <div id="loadingProviders" class="loading">
+                <div class="spinner"></div>
+                <p>Loading payment providers...</p>
+            </div>
+            
+            <div id="providerGrid" class="provider-grid" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <!-- Provider Edit Modal -->
+    <div id="providerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="providerModalTitle">Edit Provider</h2>
+                <span class="close-btn" onclick="closeProviderModal()">&times;</span>
+            </div>
+            
+            <form id="providerForm" onsubmit="saveProvider(event)">
+                <div class="form-group">
+                    <label for="providerKey">Provider Key *</label>
+                    <input type="text" id="providerKey" required 
+                           placeholder="e.g., stripe, paypal, wise, crypto">
+                </div>
+                
+                <div class="form-group">
+                    <label for="providerName">Provider Name *</label>
+                    <input type="text" id="providerName" required 
+                           placeholder="e.g., Stripe, PayPal">
+                </div>
+                
+                <div class="form-group">
+                    <label for="providerConfig">Configuration (JSON)</label>
+                    <textarea id="providerConfig" 
+                              placeholder='{"api_key": "", "test_mode": true}'></textarea>
+                    <small>Enter configuration as JSON object. Leave empty for no config.</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="providerEnabled">
+                        <label for="providerEnabled" style="margin: 0;">Enabled</label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-success">Save</button>
+                    <button type="button" class="btn-secondary" onclick="closeProviderModal()">Cancel</button>
+                </div>
+            </form>
+            
+            <div id="webhookSection" class="hidden">
+                <hr style="margin: 30px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3>Webhook Settings</h3>
+                    <button type="button" class="btn-primary" onclick="addWebhook()">Add Webhook</button>
+                </div>
+                <div id="webhookList" class="webhook-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Webhook Edit Modal -->
+    <div id="webhookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="webhookModalTitle">Edit Webhook</h2>
+                <span class="close-btn" onclick="closeWebhookModal()">&times;</span>
+            </div>
+            
+            <form id="webhookForm" onsubmit="saveWebhook(event)">
+                <div class="form-group">
+                    <label for="webhookUrl">Webhook URL</label>
+                    <input type="text" id="webhookUrl" 
+                           placeholder="https://yourserver.com/api/webhooks/stripe">
+                </div>
+                
+                <div class="form-group">
+                    <label for="webhookSecret">Webhook Secret</label>
+                    <div class="secret-field">
+                        <input type="password" id="webhookSecret" 
+                               placeholder="Enter webhook secret">
+                        <button type="button" class="btn-secondary btn-icon" 
+                                onclick="toggleSecretVisibility()">👁️</button>
+                        <button type="button" class="btn-primary btn-icon" 
+                                onclick="generateWebhookSecret()">🔑</button>
+                    </div>
+                    <small>Use the 🔑 button to generate a secure secret</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="webhookEnabled">
+                        <label for="webhookEnabled" style="margin: 0;">Enabled</label>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-success">Save</button>
+                    <button type="button" class="btn-primary" onclick="testWebhook()">Test</button>
+                    <button type="button" class="btn-secondary" onclick="closeWebhookModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let providers = [];
+        let currentProvider = null;
+        let currentWebhook = null;
+        let adminKey = 'admin123'; // Default for development
+        
+        // API helper
+        async function apiCall(url, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Admin-Key': adminKey,
+                ...options.headers
+            };
+            
+            const response = await fetch(url, {
+                ...options,
+                headers
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'API request failed');
+            }
+            
+            return data;
+        }
+        
+        // Show alert
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertContainer.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Load providers
+        async function loadProviders() {
+            try {
+                document.getElementById('loadingProviders').style.display = 'block';
+                document.getElementById('providerGrid').style.display = 'none';
+                
+                const data = await apiCall('/api/admin/payments');
+                providers = data.providers;
+                
+                renderProviders();
+                
+                document.getElementById('loadingProviders').style.display = 'none';
+                document.getElementById('providerGrid').style.display = 'grid';
+            } catch (error) {
+                showAlert('Failed to load providers: ' + error.message, 'error');
+                document.getElementById('loadingProviders').style.display = 'none';
+            }
+        }
+        
+        // Render providers
+        function renderProviders() {
+            const grid = document.getElementById('providerGrid');
+            grid.innerHTML = '';
+            
+            const providerIcons = {
+                'stripe': '💳',
+                'paypal': '🅿️',
+                'wise': '💸',
+                'crypto': '₿'
+            };
+            
+            providers.forEach(provider => {
+                const card = document.createElement('div');
+                card.className = `provider-card ${provider.enabled ? 'enabled' : ''}`;
+                
+                const icon = providerIcons[provider.provider_key] || '💰';
+                
+                card.innerHTML = `
+                    <div class="provider-header">
+                        <div class="provider-name">${provider.provider_name}</div>
+                        <div class="provider-icon">${icon}</div>
+                    </div>
+                    <div class="provider-key">Key: ${provider.provider_key}</div>
+                    <div class="provider-status ${provider.enabled ? 'enabled' : 'disabled'}">
+                        ${provider.enabled ? 'Enabled' : 'Disabled'}
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-primary" onclick="editProvider(${provider.id})">Edit</button>
+                        <button class="btn-danger" onclick="deleteProvider(${provider.id})">Delete</button>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        // Show add provider modal
+        function showAddProviderModal() {
+            currentProvider = null;
+            document.getElementById('providerModalTitle').textContent = 'Add Provider';
+            document.getElementById('providerKey').value = '';
+            document.getElementById('providerKey').disabled = false;
+            document.getElementById('providerName').value = '';
+            document.getElementById('providerConfig').value = '{"test_mode": true}';
+            document.getElementById('providerEnabled').checked = false;
+            document.getElementById('webhookSection').classList.add('hidden');
+            document.getElementById('providerModal').classList.add('active');
+        }
+        
+        // Edit provider
+        async function editProvider(providerId) {
+            try {
+                const data = await apiCall(`/api/admin/payments/${providerId}?include_secrets=true`);
+                currentProvider = data.provider;
+                
+                document.getElementById('providerModalTitle').textContent = 'Edit Provider';
+                document.getElementById('providerKey').value = currentProvider.provider_key;
+                document.getElementById('providerKey').disabled = true;
+                document.getElementById('providerName').value = currentProvider.provider_name;
+                document.getElementById('providerConfig').value = JSON.stringify(currentProvider.config, null, 2);
+                document.getElementById('providerEnabled').checked = currentProvider.enabled;
+                
+                // Load webhooks
+                await loadWebhooks(providerId);
+                document.getElementById('webhookSection').classList.remove('hidden');
+                
+                document.getElementById('providerModal').classList.add('active');
+            } catch (error) {
+                showAlert('Failed to load provider: ' + error.message, 'error');
+            }
+        }
+        
+        // Save provider
+        async function saveProvider(event) {
+            event.preventDefault();
+            
+            try {
+                const providerData = {
+                    provider_key: document.getElementById('providerKey').value,
+                    provider_name: document.getElementById('providerName').value,
+                    enabled: document.getElementById('providerEnabled').checked
+                };
+                
+                const configText = document.getElementById('providerConfig').value.trim();
+                if (configText) {
+                    try {
+                        providerData.config = JSON.parse(configText);
+                    } catch (e) {
+                        showAlert('Invalid JSON in configuration', 'error');
+                        return;
+                    }
+                }
+                
+                let url = '/api/admin/payments';
+                let method = 'POST';
+                
+                if (currentProvider) {
+                    url = `/api/admin/payments/${currentProvider.id}`;
+                    method = 'PUT';
+                }
+                
+                await apiCall(url, {
+                    method: method,
+                    body: JSON.stringify(providerData)
+                });
+                
+                showAlert('Provider saved successfully', 'success');
+                closeProviderModal();
+                loadProviders();
+            } catch (error) {
+                showAlert('Failed to save provider: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete provider
+        async function deleteProvider(providerId) {
+            if (!confirm('Are you sure you want to delete this provider?')) {
+                return;
+            }
+            
+            try {
+                await apiCall(`/api/admin/payments/${providerId}`, {
+                    method: 'DELETE'
+                });
+                
+                showAlert('Provider deleted successfully', 'success');
+                loadProviders();
+            } catch (error) {
+                showAlert('Failed to delete provider: ' + error.message, 'error');
+            }
+        }
+        
+        // Close provider modal
+        function closeProviderModal() {
+            document.getElementById('providerModal').classList.remove('active');
+        }
+        
+        // Load webhooks
+        async function loadWebhooks(providerId) {
+            try {
+                const data = await apiCall(`/api/admin/payments/${providerId}/webhooks?include_secrets=true`);
+                renderWebhooks(data.webhooks);
+            } catch (error) {
+                showAlert('Failed to load webhooks: ' + error.message, 'error');
+            }
+        }
+        
+        // Render webhooks
+        function renderWebhooks(webhooks) {
+            const list = document.getElementById('webhookList');
+            list.innerHTML = '';
+            
+            if (webhooks.length === 0) {
+                list.innerHTML = '<p style="color: #666;">No webhooks configured</p>';
+                return;
+            }
+            
+            webhooks.forEach(webhook => {
+                const item = document.createElement('div');
+                item.className = `webhook-item ${webhook.enabled ? 'enabled' : ''}`;
+                
+                item.innerHTML = `
+                    <div><strong>URL:</strong> ${webhook.webhook_url || 'Not set'}</div>
+                    <div><strong>Secret:</strong> ${webhook.webhook_secret || 'Not set'}</div>
+                    <div><strong>Status:</strong> ${webhook.enabled ? 'Enabled' : 'Disabled'}</div>
+                    <div class="button-group" style="margin-top: 10px;">
+                        <button class="btn-primary" onclick="editWebhook(${webhook.id})">Edit</button>
+                        <button class="btn-danger" onclick="deleteWebhook(${webhook.id})">Delete</button>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+            });
+        }
+        
+        // Add webhook
+        function addWebhook() {
+            if (!currentProvider) return;
+            
+            currentWebhook = null;
+            document.getElementById('webhookModalTitle').textContent = 'Add Webhook';
+            document.getElementById('webhookUrl').value = `${window.location.origin}/api/webhooks/${currentProvider.provider_key}`;
+            document.getElementById('webhookSecret').value = '';
+            document.getElementById('webhookEnabled').checked = true;
+            document.getElementById('webhookModal').classList.add('active');
+        }
+        
+        // Edit webhook
+        async function editWebhook(webhookId) {
+            try {
+                const data = await apiCall(`/api/admin/payments/${currentProvider.id}/webhooks?include_secrets=true`);
+                currentWebhook = data.webhooks.find(w => w.id === webhookId);
+                
+                if (!currentWebhook) {
+                    showAlert('Webhook not found', 'error');
+                    return;
+                }
+                
+                document.getElementById('webhookModalTitle').textContent = 'Edit Webhook';
+                document.getElementById('webhookUrl').value = currentWebhook.webhook_url || '';
+                document.getElementById('webhookSecret').value = currentWebhook.webhook_secret || '';
+                document.getElementById('webhookEnabled').checked = currentWebhook.enabled;
+                document.getElementById('webhookModal').classList.add('active');
+            } catch (error) {
+                showAlert('Failed to load webhook: ' + error.message, 'error');
+            }
+        }
+        
+        // Save webhook
+        async function saveWebhook(event) {
+            event.preventDefault();
+            
+            if (!currentProvider) return;
+            
+            try {
+                const webhookData = {
+                    webhook_url: document.getElementById('webhookUrl').value,
+                    webhook_secret: document.getElementById('webhookSecret').value,
+                    enabled: document.getElementById('webhookEnabled').checked
+                };
+                
+                let url = `/api/admin/payments/${currentProvider.id}/webhooks`;
+                let method = 'POST';
+                
+                if (currentWebhook) {
+                    url = `/api/admin/payments/${currentProvider.id}/webhooks/${currentWebhook.id}`;
+                    method = 'PUT';
+                }
+                
+                await apiCall(url, {
+                    method: method,
+                    body: JSON.stringify(webhookData)
+                });
+                
+                showAlert('Webhook saved successfully', 'success');
+                closeWebhookModal();
+                loadWebhooks(currentProvider.id);
+            } catch (error) {
+                showAlert('Failed to save webhook: ' + error.message, 'error');
+            }
+        }
+        
+        // Delete webhook
+        async function deleteWebhook(webhookId) {
+            if (!currentProvider) return;
+            
+            if (!confirm('Are you sure you want to delete this webhook?')) {
+                return;
+            }
+            
+            try {
+                await apiCall(`/api/admin/payments/${currentProvider.id}/webhooks/${webhookId}`, {
+                    method: 'DELETE'
+                });
+                
+                showAlert('Webhook deleted successfully', 'success');
+                loadWebhooks(currentProvider.id);
+            } catch (error) {
+                showAlert('Failed to delete webhook: ' + error.message, 'error');
+            }
+        }
+        
+        // Close webhook modal
+        function closeWebhookModal() {
+            document.getElementById('webhookModal').classList.remove('active');
+        }
+        
+        // Toggle secret visibility
+        function toggleSecretVisibility() {
+            const input = document.getElementById('webhookSecret');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+        
+        // Generate webhook secret
+        async function generateWebhookSecret() {
+            try {
+                const data = await apiCall(`/api/admin/payments/${currentProvider.id}/webhooks`, {
+                    method: 'POST',
+                    body: JSON.stringify({ generate_secret: true })
+                });
+                
+                if (data.webhook && data.webhook.webhook_secret) {
+                    document.getElementById('webhookSecret').value = data.webhook.webhook_secret;
+                    
+                    // Delete the temporary webhook we just created
+                    await apiCall(`/api/admin/payments/${currentProvider.id}/webhooks/${data.webhook.id}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    showAlert('Secret generated successfully', 'success');
+                }
+            } catch (error) {
+                // Fallback: generate client-side
+                const array = new Uint8Array(32);
+                crypto.getRandomValues(array);
+                const secret = btoa(String.fromCharCode(...array)).replace(/[+\/=]/g, '');
+                document.getElementById('webhookSecret').value = secret;
+                showAlert('Secret generated (client-side)', 'success');
+            }
+        }
+        
+        // Test webhook
+        async function testWebhook() {
+            if (!currentProvider) return;
+            
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            
+            if (!webhookUrl) {
+                showAlert('Please enter a webhook URL first', 'error');
+                return;
+            }
+            
+            try {
+                const testData = {
+                    type: 'test',
+                    provider: currentProvider.provider_key,
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        message: 'This is a test webhook'
+                    }
+                };
+                
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Test webhook sent successfully!', 'success');
+                } else {
+                    const error = await response.text();
+                    showAlert('Test webhook failed: ' + error, 'error');
+                }
+            } catch (error) {
+                showAlert('Test webhook failed: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for admin key in URL or localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlAdminKey = urlParams.get('admin_key');
+            
+            if (urlAdminKey) {
+                adminKey = urlAdminKey;
+                localStorage.setItem('uvdm_admin_key', adminKey);
+            } else {
+                const storedKey = localStorage.getItem('uvdm_admin_key');
+                if (storedKey) {
+                    adminKey = storedKey;
+                }
+            }
+            
+            loadProviders();
+        });
+    </script>
+</body>
+</html>
