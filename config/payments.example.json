@@ -1,0 +1,59 @@
+{
+  "stripe": {
+    "enabled": false,
+    "publishable_key": "pk_test_XXXXXXXXXXXXXXXXXXXXXXXX",
+    "secret_key": "sk_test_XXXXXXXXXXXXXXXXXXXXXXXX",
+    "webhook_secret": "whsec_XXXXXXXXXXXXXXXXXXXXXXXX",
+    "price_ids": {
+      "pro_monthly": "price_XXXXXXXXXXXXXXXXXXXXXXXX",
+      "pro_yearly": "price_XXXXXXXXXXXXXXXXXXXXXXXX"
+    }
+  },
+  "paypal": {
+    "enabled": false,
+    "mode": "sandbox",
+    "client_id": "XXXXXXXXXXXXXXXXXXXXXXXX",
+    "secret": "XXXXXXXXXXXXXXXXXXXXXXXX",
+    "plan_ids": {
+      "pro_monthly": "P-XXXXXXXXXXXXXXXXXXXXXXXX",
+      "pro_yearly": "P-XXXXXXXXXXXXXXXXXXXXXXXX"
+    }
+  },
+  "plans": {
+    "pro_monthly": {
+      "name": "Pro Monthly",
+      "price": 9.99,
+      "currency": "USD",
+      "billing_period": "monthly",
+      "features": [
+        "Faster download speeds",
+        "Advanced video editing",
+        "Batch processing (up to 100 videos)",
+        "Cloud storage integration",
+        "Priority support",
+        "Ad-free experience"
+      ]
+    },
+    "pro_yearly": {
+      "name": "Pro Yearly",
+      "price": 99.99,
+      "currency": "USD",
+      "billing_period": "yearly",
+      "features": [
+        "All Pro Monthly features",
+        "2 months free (annual billing)",
+        "Extended cloud storage",
+        "Premium support priority"
+      ]
+    }
+  },
+  "webhooks": {
+    "stripe_endpoint": "/api/webhooks/stripe",
+    "paypal_endpoint": "/api/webhooks/paypal"
+  },
+  "notes": {
+    "stripe_setup": "1. Create a Stripe account at https://stripe.com\n2. Get your API keys from the Stripe Dashboard\n3. Create products and prices in Stripe Dashboard\n4. Set up webhook endpoint for subscription events\n5. Update the keys above and set enabled to true",
+    "paypal_setup": "1. Create a PayPal Business account\n2. Create an app in PayPal Developer Dashboard\n3. Get your Client ID and Secret\n4. Create subscription plans in PayPal\n5. Set mode to 'sandbox' for testing or 'live' for production\n6. Update the keys above and set enabled to true",
+    "environment_variables": "You can also set these as environment variables:\n- STRIPE_PUBLISHABLE_KEY\n- STRIPE_SECRET_KEY\n- STRIPE_WEBHOOK_SECRET\n- PAYPAL_CLIENT_ID\n- PAYPAL_SECRET\n- PAYPAL_MODE (sandbox or live)"
+  }
+}

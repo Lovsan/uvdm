@@ -290,6 +290,145 @@ def generate_license():
     })
 
 
+@app.route('/api/claim-trial', methods=['POST'])
+def claim_trial():
+    """
+    Claim a free trial period (placeholder implementation).
+    This endpoint is called by the client when a user claims their free trial.
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'Missing request data'}), 400
+    
+    duration_days = data.get('duration_days', 14)
+    
+    # Calculate expiration date
+    expires_at = (datetime.now() + timedelta(days=duration_days)).isoformat()
+    
+    # In a real implementation, you would:
+    # 1. Verify the user is not already on a trial
+    # 2. Check user authentication
+    # 3. Store trial information in database
+    # 4. Send confirmation email
+    
+    return jsonify({
+        'success': True,
+        'message': 'Trial claimed successfully',
+        'expires_at': expires_at,
+        'duration_days': duration_days
+    })
+
+
+@app.route('/api/create-checkout-session', methods=['POST'])
+def create_checkout_session():
+    """
+    Create a Stripe checkout session (placeholder implementation).
+    Returns 501 Not Implemented if Stripe is not configured.
+    """
+    # Check if Stripe is configured
+    stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+    
+    if not stripe_key or stripe_key.startswith('sk_test_XXX'):
+        return jsonify({
+            'error': 'Stripe payment integration not configured',
+            'message': 'Please configure Stripe API keys in config/payments.json or environment variables',
+            'setup_instructions': {
+                'step1': 'Create a Stripe account at https://stripe.com',
+                'step2': 'Get your API keys from Stripe Dashboard',
+                'step3': 'Set STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY environment variables',
+                'step4': 'Restart the API server',
+                'docs': 'See README.md for detailed setup instructions'
+            }
+        }), 501
+    
+    # If Stripe is configured, this is where you would:
+    # 1. Import stripe library
+    # 2. Create a checkout session
+    # 3. Return the checkout URL
+    
+    return jsonify({
+        'success': True,
+        'checkout_url': 'https://checkout.stripe.com/placeholder',
+        'message': 'Stripe integration active (placeholder response)'
+    })
+
+
+@app.route('/api/paypal/create-order', methods=['POST'])
+def create_paypal_order():
+    """
+    Create a PayPal order (placeholder implementation).
+    Returns 501 Not Implemented if PayPal is not configured.
+    """
+    # Check if PayPal is configured
+    paypal_client_id = os.environ.get('PAYPAL_CLIENT_ID')
+    
+    if not paypal_client_id or paypal_client_id.startswith('XXX'):
+        return jsonify({
+            'error': 'PayPal payment integration not configured',
+            'message': 'Please configure PayPal API credentials in config/payments.json or environment variables',
+            'setup_instructions': {
+                'step1': 'Create a PayPal Business account',
+                'step2': 'Create an app in PayPal Developer Dashboard',
+                'step3': 'Set PAYPAL_CLIENT_ID and PAYPAL_SECRET environment variables',
+                'step4': 'Set PAYPAL_MODE to "sandbox" or "live"',
+                'step5': 'Restart the API server',
+                'docs': 'See README.md for detailed setup instructions'
+            }
+        }), 501
+    
+    # If PayPal is configured, this is where you would:
+    # 1. Import PayPal SDK
+    # 2. Create an order
+    # 3. Return the approval URL
+    
+    return jsonify({
+        'success': True,
+        'approval_url': 'https://paypal.com/placeholder',
+        'message': 'PayPal integration active (placeholder response)'
+    })
+
+
+@app.route('/api/trim', methods=['POST'])
+def trim_video():
+    """
+    Trim a video (placeholder implementation).
+    Returns 501 Not Implemented as this requires video processing infrastructure.
+    """
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'Missing request data'}), 400
+    
+    source = data.get('source')
+    start = data.get('start')
+    end = data.get('end')
+    
+    if not all([source, start is not None, end is not None]):
+        return jsonify({'error': 'Missing required fields: source, start, end'}), 400
+    
+    # This is a placeholder. Real implementation would:
+    # 1. Download/access the source video
+    # 2. Use ffmpeg to trim the video
+    # 3. Store the trimmed video
+    # 4. Return a download URL or job ID
+    
+    return jsonify({
+        'error': 'Server-side video trimming not implemented',
+        'message': 'This is a placeholder endpoint. Server-side trimming requires additional infrastructure.',
+        'suggestion': 'Use local trimming mode in the client for now',
+        'implementation_notes': {
+            'requirements': [
+                'FFmpeg installed on server',
+                'Storage for processed videos',
+                'Queue system for video processing jobs',
+                'CDN or file server for downloads'
+            ],
+            'todo': 'Implement video processing worker and storage backend'
+        }
+    }), 501
+
+
 if __name__ == '__main__':
     # Run the server
     port = int(os.environ.get('UVDM_API_PORT', 5000))
