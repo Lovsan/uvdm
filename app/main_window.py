@@ -17,6 +17,7 @@ from app.clipboard_monitor import ClipboardMonitor
 from app.themes import themes
 from app.my_playlists_tab import MyPlaylistsTab
 from app.license_dialog import show_license_dialog
+from app.pro_features_tab import ProFeaturesTab
 #from app.my_playlists import PlaylistManager
 
 
@@ -37,6 +38,7 @@ class YTDLPApp(QMainWindow):
         self.batch_downloader_tab = BatchDownloader(self.settings_tab)  # Batch Downloader tab
         self.editor_tab = EditorTab()  # Editor tab
         self.playlists_tab = MyPlaylistsTab() #  My Playlists tab
+        self.pro_features_tab = ProFeaturesTab()  # Pro Features tab
 
         # Add the tabs to the main window
         self.tabs.addTab(self.download_manager, "Downloads")
@@ -45,6 +47,7 @@ class YTDLPApp(QMainWindow):
         self.tabs.addTab(self.download_later_tab, "Download Later")
         self.tabs.addTab(self.playlists_tab, "My Playlists")
         self.tabs.addTab(self.uploads_tab, "Uploads")
+        self.tabs.addTab(self.pro_features_tab, "Pro Features")
         self.tabs.addTab(self.settings_tab, "Settings")
         self.tabs.addTab(self.logs_tab, "Logs")
         self.tabs.addTab(self.editor_tab, "Editor")

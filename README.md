@@ -14,7 +14,10 @@ UVDM is a powerful and easy-to-use tool for downloading and managing videos from
 - **Active Downloads Overview**: Monitor active downloads, network usage, and storage usage.
 - **yt-dlp Integration**: Built on top of [yt-dlp](https://github.com/yt-dlp/yt-dlp) for reliable and powerful downloading capabilities.
 - **License Management System**: Optional API-based license verification and management for enterprise deployments.
-- **Multi-Provider Payment System**: Support for Stripe, PayPal, Wise, and Cryptocurrency payments with comprehensive admin UI and webhook handling.
+- **Video Preview & Trimming**: Preview videos and trim them to your desired length with built-in FFmpeg integration.
+- **2-Week Free Pro Trial**: First-time users can try Pro features for 2 weeks, no credit card required.
+- **Multiple Payment Options**: Subscribe to Pro via Stripe or PayPal (when configured).
+- **1000+ Supported Platforms**: Download from YouTube, Facebook, Instagram, TikTok, and 1000+ more sites.
 
 ## Installation
 
@@ -115,199 +118,264 @@ UVDM_LICENSE_SERVER=http://localhost:5000
 
 **Important**: Change the default admin key in production!
 
-## Payment System (Multi-Provider Support)
+## Supported Platforms
 
-UVDM now includes a comprehensive payment system that supports multiple payment providers including Stripe, PayPal, Wise, and Cryptocurrency payments. The system includes an admin interface for managing payment providers, webhook handlers for payment notifications, and a client-facing subscription page.
+UVDM supports downloading videos from 1000+ platforms through yt-dlp integration. Here are some of the most popular:
+
+### Featured Platforms
+
+- **YouTube**: Single videos, playlists, channels, multiple qualities (144p to 4K+), age-restricted content, subtitles
+- **Facebook**: Public videos, Facebook Watch, live videos, multiple quality options
+- **Instagram**: Post videos, Reels, IGTV, Stories (with authentication for private accounts)
+- **TikTok**: Single videos, downloads without watermark (when possible), audio extraction
+- **Adult Content Sites**: Various adult platforms with premium content support (18+, requires authentication)
+- **And 1000+ More**: Twitter/X, Reddit, Vimeo, Dailymotion, Twitch, SoundCloud, and many more
+
+### Viewing Platform Information
+
+1. Launch UVDM
+2. Navigate to the "About" tab or "Pro Features" tab
+3. Click on any platform icon to see detailed support information
+4. Use the "View Supported Sites" button to see the complete list of 1000+ supported extractors
+
+## Free Trial & Pro Features
+
+### 2-Week Free Trial
+
+First-time users can try UVDM Pro features for 2 weeks, completely free with no credit card required!
+
+**To claim your free trial:**
+
+1. Launch UVDM
+2. Navigate to the "Pro Features" tab
+3. Click the "Claim Free Trial" button
+4. Enjoy 14 days of Pro features!
+
+**Pro Features Include:**
+
+- 🚀 Faster download speeds with priority servers
+- 📹 Advanced video editing and trimming tools
+- 🎬 Batch processing up to 100 videos
+- ☁️ Cloud storage integration
+- 🔄 Automatic format conversion
+- 📊 Detailed download analytics
+- 🎯 Ad-free experience
+- 💬 Priority customer support
+- 🔓 Access to exclusive features
+
+### Trial Details
+
+- Trial information is stored locally using Qt Settings
+- If the API server is configured, trial data is also synced to the server
+- No credit card required for trial activation
+- Full access to all Pro features during trial period
+- Automatic notification when trial is about to expire
+
+## Payment & Subscription
+
+UVDM supports multiple payment methods for Pro subscriptions:
+
+### Supported Payment Methods
+
+- **Stripe**: Credit/debit cards, Apple Pay, Google Pay
+- **PayPal**: PayPal balance, credit/debit cards
+
+### Subscription Plans
+
+- **Pro Monthly**: $9.99/month - All Pro features
+- **Pro Yearly**: $99.99/year - Save 2 months (annual billing)
+
+### Setting Up Payment Integration (For Administrators)
+
+Payment integration requires configuration on the API server. Follow these steps:
+
+#### 1. Configure Payment Keys
+
+Create a `config/payments.json` file based on `config/payments.example.json`:
+
+```bash
+cp config/payments.example.json config/payments.json
+```
+
+Edit `config/payments.json` and add your API keys:
+
+**For Stripe:**
+```json
+{
+  "stripe": {
+    "enabled": true,
+    "publishable_key": "pk_live_YOUR_KEY",
+    "secret_key": "sk_live_YOUR_KEY",
+    "webhook_secret": "whsec_YOUR_SECRET"
+  }
+}
+```
+
+**For PayPal:**
+```json
+{
+  "paypal": {
+    "enabled": true,
+    "mode": "live",
+    "client_id": "YOUR_CLIENT_ID",
+    "secret": "YOUR_SECRET"
+  }
+}
+```
+
+#### 2. Set Environment Variables (Alternative)
+
+You can also configure payments using environment variables:
+
+```bash
+# Stripe
+export STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_KEY
+export STRIPE_SECRET_KEY=sk_live_YOUR_KEY
+export STRIPE_WEBHOOK_SECRET=whsec_YOUR_SECRET
+
+# PayPal
+export PAYPAL_CLIENT_ID=YOUR_CLIENT_ID
+export PAYPAL_SECRET=YOUR_SECRET
+export PAYPAL_MODE=live  # or 'sandbox' for testing
+```
+
+#### 3. Create Products and Plans
+
+**Stripe Setup:**
+1. Log in to [Stripe Dashboard](https://dashboard.stripe.com)
+2. Create products: "UVDM Pro Monthly" and "UVDM Pro Yearly"
+3. Create prices for each product
+4. Copy the price IDs and add them to `config/payments.json`
+
+**PayPal Setup:**
+1. Log in to [PayPal Developer Dashboard](https://developer.paypal.com)
+2. Create subscription plans
+3. Copy the plan IDs and add them to `config/payments.json`
+
+#### 4. Set Up Webhooks
+
+**Stripe Webhooks:**
+1. In Stripe Dashboard, go to Developers → Webhooks
+2. Add endpoint: `https://your-domain.com/api/webhooks/stripe`
+3. Select events: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+4. Copy the webhook signing secret to `config/payments.json`
+
+**PayPal Webhooks:**
+1. In PayPal Developer Dashboard, go to your app → Webhooks
+2. Add webhook URL: `https://your-domain.com/api/webhooks/paypal`
+3. Select events: `BILLING.SUBSCRIPTION.CREATED`, `BILLING.SUBSCRIPTION.UPDATED`, `BILLING.SUBSCRIPTION.CANCELLED`
+
+#### 5. Restart the API Server
+
+```bash
+python api_server.py
+```
+
+### Testing Payment Integration
+
+Use test mode before going live:
+
+**Stripe Test Mode:**
+- Use test API keys (pk_test_... and sk_test_...)
+- Test with [Stripe test cards](https://stripe.com/docs/testing)
+
+**PayPal Sandbox:**
+- Set `"mode": "sandbox"` in config
+- Use [PayPal Sandbox accounts](https://developer.paypal.com/docs/api-basics/sandbox/)
+
+### Payment Placeholder Mode
+
+If payment credentials are not configured, UVDM operates in "placeholder mode":
+- Payment buttons are visible but show configuration instructions when clicked
+- Users see helpful setup messages
+- No actual payment processing occurs
+- Perfect for development and testing
+
+## Video Preview & Trimming
+
+UVDM includes built-in video preview and trimming capabilities powered by FFmpeg.
 
 ### Features
 
-- **Multiple Payment Providers**: Support for Stripe, PayPal, Wise, and Cryptocurrency payments
-- **Admin UI**: Comprehensive web-based admin interface for managing payment providers and webhooks
-- **Webhook Support**: Secure webhook handling with signature verification for each provider
-- **Database-backed Configuration**: SQLite database for storing provider credentials and webhook settings
-- **Security**: Admin authentication, secret masking, and webhook signature verification
-- **Test Mode**: Safe testing with mock payment sessions before going live
+- Preview videos in your system's default media player
+- Trim videos to specific start and end times
+- Two trimming modes: Local (fast) and Server-side (for URLs)
+- Visual time selection with second precision
+- Progress indicators for trimming operations
+- Save trimmed videos with custom names
 
-### Quick Start with Payment Server
+### Using Video Preview & Trim
 
-1. **Start the payment-enabled API server**:
-   ```sh
-   python payment_api_server.py
-   ```
+1. Download a video using UVDM
+2. Navigate to "Download History" tab
+3. Right-click on a downloaded video
+4. Select "Preview & Trim" from the context menu
+5. In the preview dialog:
+   - Click "▶ Play" to preview the full video
+   - Set start and end times for trimming
+   - Choose trimming mode (Local or Server-side)
+   - Click "✂️ Trim Video" to create the trimmed version
+   - Save the trimmed video to your desired location
 
-2. **Initialize the payment database** (automatic on first run):
-   ```sh
-   python db/init_db.py
-   ```
+### Trimming Modes
 
-3. **Access the Admin UI**:
-   - Open your browser to `http://localhost:5000/admin/payments`
-   - Default admin key is `admin123` (change this in production!)
+**Local Mode (Recommended):**
+- Requires: Downloaded video file and FFmpeg installed
+- Pros: Fast processing, no server required, works offline
+- Uses: FFmpeg with copy codec for quick trimming
 
-4. **Configure Payment Providers**:
-   - Click "Add Provider" or edit existing providers
-   - Add your API keys and credentials
-   - Enable the provider
-   - Configure webhook settings for each provider
+**Server-side Mode:**
+- Requires: API server with video processing configured
+- Pros: Works with video URLs, no local FFmpeg needed
+- Note: This is currently a placeholder - server implementation required
 
-5. **Access Client Subscription Page**:
-   - Open `http://localhost:5000/static/subscription.html`
-   - Users can select payment methods and initiate payments
+### FFmpeg Installation
 
-### Payment Provider Configuration
+Video trimming requires FFmpeg to be installed:
 
-#### Stripe
+**Windows:**
+```bash
+# Using Chocolatey
+choco install ffmpeg
 
-1. Sign up at [https://stripe.com](https://stripe.com)
-2. Get API keys from [https://dashboard.stripe.com/apikeys](https://dashboard.stripe.com/apikeys)
-3. In the admin UI, add provider with config:
-   ```json
-   {
-     "api_key": "sk_test_...",
-     "publishable_key": "pk_test_...",
-     "test_mode": true
-   }
-   ```
-4. Create webhook at [https://dashboard.stripe.com/webhooks](https://dashboard.stripe.com/webhooks)
-5. Set webhook URL to `https://yourserver.com/api/webhooks/stripe`
-6. Add webhook secret to webhook settings in admin UI
+# Or download from https://ffmpeg.org/download.html
+```
 
-#### PayPal
+**macOS:**
+```bash
+brew install ffmpeg
+```
 
-1. Sign up at [https://developer.paypal.com](https://developer.paypal.com)
-2. Create an app in the PayPal Developer Dashboard
-3. Get Client ID and Secret from app settings
-4. In the admin UI, add provider with config:
-   ```json
-   {
-     "client_id": "your_client_id",
-     "client_secret": "your_client_secret",
-     "test_mode": true
-   }
-   ```
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt install ffmpeg
 
-#### Wise (TransferWise)
+# Fedora
+sudo dnf install ffmpeg
 
-1. Sign up at [https://wise.com](https://wise.com)
-2. Generate API token from settings
-3. In the admin UI, add provider with config:
-   ```json
-   {
-     "api_token": "your_api_token",
-     "test_mode": true
-   }
-   ```
+# Arch
+sudo pacman -S ffmpeg
+```
 
-#### Cryptocurrency
+Verify installation:
+```bash
+ffmpeg -version
+```
 
-1. Set up cryptocurrency wallets (Bitcoin, Ethereum, etc.)
-2. In the admin UI, add provider with config:
-   ```json
-   {
-     "btc_address": "your_btc_address",
-     "eth_address": "your_eth_address",
-     "test_mode": true
-   }
-   ```
+### Server-side Trimming (For Administrators)
 
-### Webhook Configuration
+To enable server-side trimming, implement the `/api/trim` endpoint in `api_server.py`:
 
-Webhooks allow payment providers to notify your server about payment events in real-time.
+1. Install FFmpeg on the server
+2. Set up video storage (local or cloud)
+3. Implement video processing queue
+4. Handle trim requests and return download URLs
+5. Configure CDN or file server for video delivery
 
-1. **Configure Webhook URL**: Set the webhook URL for each provider in the admin UI
-   - Format: `https://yourserver.com/api/webhooks/{provider_key}`
-   - Example: `https://yourserver.com/api/webhooks/stripe`
+The endpoint specification is already defined in `api_server.py` as a placeholder.
 
-2. **Generate Webhook Secret**: Use the 🔑 button in the admin UI to generate a secure secret
-
-3. **Enable Webhook**: Toggle the "Enabled" checkbox
-
-4. **Test Webhook**: Use the "Test" button to send a test webhook to verify configuration
-
-### API Endpoints
-
-#### Admin Endpoints (require `X-Admin-Key` header)
-
-- `GET /api/admin/payments` - List all payment providers
-- `POST /api/admin/payments` - Create a new payment provider
-- `PUT /api/admin/payments/:id` - Update a payment provider
-- `DELETE /api/admin/payments/:id` - Delete a payment provider
-- `GET /api/admin/payments/:id/webhooks` - List webhooks for a provider
-- `POST /api/admin/payments/:id/webhooks` - Create webhook settings
-- `PUT /api/admin/payments/:id/webhooks/:webhookId` - Update webhook settings
-- `DELETE /api/admin/payments/:id/webhooks/:webhookId` - Delete webhook settings
-
-#### Public Endpoints
-
-- `POST /api/payments/:provider/create-session` - Create a payment session
-- `POST /api/payments/:provider/confirm` - Confirm a payment
-- `GET /api/payments/providers` - List enabled payment providers
-- `POST /api/webhooks/:provider` - Receive webhook from payment provider
-
-### Security Best Practices
-
-1. **Set a Secure Admin Key**:
-   ```sh
-   export UVDM_ADMIN_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
-   ```
-
-2. **Use HTTPS in Production**: Webhooks and API endpoints should use HTTPS
-
-3. **Rotate Webhook Secrets Regularly**: Generate new secrets periodically
-
-4. **Test Mode First**: Always test with test API keys before using production keys
-
-5. **Monitor Webhook Logs**: Check server logs for webhook verification failures
-
-6. **Restrict Admin Access**: Only expose admin endpoints to trusted networks
-
-### Database Structure
-
-The payment system uses SQLite with two main tables:
-
-- **payment_providers**: Stores payment provider configurations
-  - `id`, `provider_key`, `provider_name`, `config` (JSON), `enabled`, `created_at`, `updated_at`
-
-- **webhook_settings**: Stores webhook configurations for each provider
-  - `id`, `provider_id`, `webhook_url`, `webhook_secret`, `enabled`, `created_at`, `updated_at`
-
-### Configuration Files
-
-- `config/payments-db.example.json` - Database and provider configuration examples
-- `db/migrations/20251019_create_payment_tables.sql` - Database schema migration
-
-### Development Mode
-
-By default, the system runs in development mode with:
-- Default admin key `admin123` (shown with security warning)
-- Mock payment sessions (no real charges)
-- Test mode enabled for all providers
-
-### Production Deployment
-
-For production deployment:
-
-1. Set secure environment variables:
-   ```sh
-   export UVDM_ADMIN_KEY="your_secure_random_key"
-   export UVDM_API_HOST="0.0.0.0"
-   export UVDM_API_PORT="5000"
-   export UVDM_API_DEBUG="False"
-   ```
-
-2. Use a production WSGI server (e.g., Gunicorn):
-   ```sh
-   pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:5000 payment_api_server:app
-   ```
-
-3. Set up reverse proxy (nginx, Apache) with HTTPS
-
-4. Replace test API keys with production keys
-
-5. Enable webhooks with proper secrets
-
-For more details, see `config/payments-db.example.json`.
+**Important**: Change the default admin key in production!
 
 ## License
 
