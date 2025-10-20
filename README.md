@@ -5,6 +5,7 @@ UVDM is a powerful and easy-to-use tool for downloading and managing videos from
 ## Key Features
 
 - **Download videos in various formats**: Supports MP3, MP4, AVI, and more.
+- **Torrent Support**: Download torrents from public and private trackers with magnet links and .torrent files.
 - **Clipboard Monitoring**: Detects supported video links automatically.
 - **Playlist and Batch Download Support**: Download entire playlists or batch multiple links together.
 - **Integrated Download History**: View downloaded videos with thumbnails, video details, and advanced sorting options.
@@ -73,9 +74,53 @@ Once the application launches, you can use the following features:
 
 
 
+## Torrent Support
+
+UVDM now includes comprehensive torrent downloading capabilities powered by libtorrent.
+
+### Features
+
+- **Magnet Link Support**: Paste magnet links directly into UVDM
+- **.torrent File Support**: Upload and download .torrent files
+- **Public Tracker Support**: Download from public torrent sites
+- **Private Tracker Support**: Configure authentication for private trackers
+- **Real-time Information**: View seeds, peers, download/upload speeds
+- **File Information**: See complete file lists with sizes before downloading
+- **Progress Tracking**: Monitor download progress with detailed statistics
+
+### Using Torrents
+
+1. Launch UVDM and navigate to the "Torrents" tab
+2. Enter a magnet link or browse for a .torrent file
+3. Select your download location
+4. Click "Start Download" to begin
+5. Monitor progress with real-time statistics
+6. View downloaded files in the specified output folder
+
+### Torrent Information Display
+
+The Torrents tab displays comprehensive information about your torrent:
+
+- **Torrent Name**: The name of the content being downloaded
+- **Total Size**: Combined size of all files in the torrent
+- **File Count**: Number of files in the torrent
+- **Creator**: Who created the torrent (if available)
+- **Creation Date**: When the torrent was created
+- **File List**: Detailed list of all files with individual sizes
+- **Real-time Stats**: Seeds, peers, download/upload speeds
+- **Download Progress**: Visual progress bar and percentage
+
+### Technical Details
+
+- **Library**: libtorrent 2.0.11+
+- **Protocol**: BitTorrent protocol with DHT, PEX, and UPnP support
+- **Session Management**: Efficient session handling with proper cleanup
+- **Thread Safety**: Non-blocking downloads using Qt threading
+
 ## Dependencies
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- [libtorrent](https://www.libtorrent.org/)
 - Python 3.7+
 - Flask (for API server)
 - Additional Python packages (listed in `requirements.txt`)
@@ -388,11 +433,13 @@ Contributions are welcome! Feel free to open issues or submit pull requests to i
 ## Acknowledgments
 
 - **yt-dlp**: The core downloading tool used by UVDM.
-- **ffmpeg** A complete, cross-platform solution to record, convert and stream audio and video
+- **libtorrent**: High-performance BitTorrent implementation for torrent downloads.
+- **ffmpeg**: A complete, cross-platform solution to record, convert and stream audio and video.
 
 ## Links
 
 - **GitHub Repository**: [Ultimate Video Download Manager](https://github.com/Lovsan/uvdm)
 - **yt-dlp GitHub Repository**: [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- **libtorrent Website**: [libtorrent.org](https://www.libtorrent.org/)
 
 Get started with UVDM and simplify your video downloading experience!
