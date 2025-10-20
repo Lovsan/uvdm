@@ -5,3 +5,4 @@ psutil>=5.8.0
 pyperclip>=1.8.0
 plyer>=2.0.0
 flask>=2.0.0
+libtorrent>=2.0.0

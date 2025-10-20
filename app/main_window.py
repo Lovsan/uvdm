@@ -18,6 +18,7 @@ from app.themes import themes
 from app.my_playlists_tab import MyPlaylistsTab
 from app.license_dialog import show_license_dialog
 from app.pro_features_tab import ProFeaturesTab
+from app.torrent_tab import TorrentTab
 #from app.my_playlists import PlaylistManager
 
 
@@ -39,10 +40,12 @@ class YTDLPApp(QMainWindow):
         self.editor_tab = EditorTab()  # Editor tab
         self.playlists_tab = MyPlaylistsTab() #  My Playlists tab
         self.pro_features_tab = ProFeaturesTab()  # Pro Features tab
+        self.torrent_tab = TorrentTab()  # Torrent download tab
 
         # Add the tabs to the main window
         self.tabs.addTab(self.download_manager, "Downloads")
         self.tabs.addTab(self.batch_downloader_tab, "Batch Downloader")
+        self.tabs.addTab(self.torrent_tab, "Torrents")
         self.tabs.addTab(self.history_tab, "Download History")
         self.tabs.addTab(self.download_later_tab, "Download Later")
         self.tabs.addTab(self.playlists_tab, "My Playlists")
